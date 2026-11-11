@@ -41,20 +41,20 @@ export default async function Page({
       <section className="mx-auto grid max-w-[480px] gap-5 text-lg">
         <Link href={home} className="text-base font-semibold underline">← Bumalik sa module</Link>
         <div>
-          <p className="text-sm text-stone-500">{section.skill}</p>
+          <p className="text-sm text-muted">{section.skill}</p>
           <h1 className="text-2xl font-bold">{section.title}</h1>
         </div>
         <p>{section.lesson_text}</p>
-        <div className="rounded-xl bg-stone-100 p-4">
+        <div className="rounded-xl bg-paper p-4">
           <p className="font-bold">Halimbawa</p>
           <p className="mt-1">{section.worked_example}</p>
         </div>
         <Practice items={section.practice_items} />
         {plan.progress[section.id] ? (
-          <p className="rounded-xl bg-emerald-50 p-4 font-semibold text-emerald-900">Tapos mo na ang section na ito.</p>
+          <p className="rounded-xl bg-primary/10 p-4 font-semibold text-primary">Tapos mo na ang section na ito.</p>
         ) : (
           <form action={completeSection.bind(null, plan.id, section.id)}>
-            <button className={`${big} bg-emerald-800 text-white`}>Tapos na ako dito</button>
+            <button className={`${big} bg-primary text-white`}>Tapos na ako dito</button>
           </form>
         )}
       </section>
@@ -73,24 +73,24 @@ export default async function Page({
         <Link href={home} className="text-base font-semibold underline">← Bumalik</Link>
         <div>
           <h1 className="text-2xl font-bold">Final test</h1>
-          <p className="mt-1 text-base text-stone-600">
+          <p className="mt-1 text-base text-muted">
             {mod.final_test.items.length} tanong. Pasado: {mod.passing_score}, itinakda ng employer.
           </p>
         </div>
         <form action={submitTest.bind(null, plan.id)} className="grid gap-5">
           {mod.final_test.items.map((it, i) => (
-            <fieldset key={i} className="grid gap-2 rounded-xl border border-stone-200 bg-white p-4">
+            <fieldset key={i} className="grid gap-2 card p-4">
               <legend className="sr-only">Tanong {i + 1}</legend>
               <p>{i + 1}. {it.prompt}</p>
               {it.choices.map((c, n) => (
-                <label key={n} className="flex cursor-pointer items-start gap-3 rounded-xl border border-stone-300 px-4 py-3 has-[:checked]:border-emerald-700 has-[:checked]:bg-emerald-50">
-                  <input type="radio" name={`q${i}`} id={`q${i}_${n}`} value={n} required className="mt-1.5 h-4 w-4 accent-emerald-800" />
+                <label key={n} className="flex cursor-pointer items-start gap-3 rounded-xl border border-line px-4 py-3 has-[:checked]:border-primary has-[:checked]:bg-primary/10">
+                  <input type="radio" name={`q${i}`} id={`q${i}_${n}`} value={n} required className="mt-1.5 h-4 w-4 accent-primary" />
                   <span>{c}</span>
                 </label>
               ))}
             </fieldset>
           ))}
-          <button className={`${big} bg-emerald-800 text-white`}>Ipasa ang sagot</button>
+          <button className={`${big} bg-primary text-white`}>Ipasa ang sagot</button>
         </form>
       </section>
     );
@@ -104,7 +104,7 @@ export default async function Page({
   return (
     <section className="mx-auto grid max-w-[480px] gap-5 text-lg">
       <h1 className="text-2xl font-bold">Kumusta, {candidate.display_name}!</h1>
-      {openJobs.length === 0 && <p className="text-stone-600">Wala pang bukas na job para sa'yo ngayon.</p>}
+      {openJobs.length === 0 && <p className="text-muted">Wala pang bukas na job para sa'yo ngayon.</p>}
       {openJobs.map((job) => {
         const employer = employers.find((e) => e.id === job.employer_id);
         const a = assessments.find((x) => x.job_id === job.id && x.candidate_id === candidate.id);
@@ -121,24 +121,25 @@ export default async function Page({
         const offer = offers.find((o) => o.job_id === job.id && o.candidate_id === candidate.id);
 
         return (
-          <div key={job.id} className="grid gap-4 rounded-2xl border border-stone-200 bg-white p-5">
+          <div key={job.id} className="grid gap-4 card p-5">
             <div>
-              <p className="text-sm text-stone-500">{employer?.name}</p>
+              <p className="text-sm text-muted">{employer?.name}</p>
               <h2 className="text-xl font-bold">{job.title}</h2>
-              <p className="mt-1">Sahod: <b>₱{job.pay_confirmed} kada araw</b></p>
+              <p className="mt-3 text-sm text-muted">Sahod</p>
+              <p className="big-number">₱{job.pay_confirmed}<span className="ml-1 font-sans text-base font-normal text-muted">kada araw</span></p>
             </div>
 
             {offer && (
               <>
-                <div className="grid gap-2 rounded-2xl border-2 border-dashed border-stone-800 p-5">
-                  <span className={`w-fit -rotate-2 rounded px-3 py-2 font-mono text-sm font-semibold tracking-widest ${offer.guaranteed ? "bg-amber-400 text-amber-950" : "bg-stone-200 text-stone-700"}`}>
+                <div className="grid gap-2 rounded-2xl border-2 border-dashed border-ink p-5">
+                  <span className={`w-fit -rotate-2 rounded px-3 py-2 font-mono text-sm font-semibold tracking-widest ${offer.guaranteed ? "bg-accent text-ink" : "bg-line text-muted"}`}>
                     {offer.guaranteed ? "GUARANTEED" : "NOT GUARANTEED · WAITLIST"}
                   </span>
-                  <p className="text-sm text-stone-500">{offer.guaranteed ? "Job offer" : "Waitlist"} mula sa {employer?.name}</p>
+                  <p className="text-sm text-muted">{offer.guaranteed ? "Job offer" : "Waitlist"} mula sa {employer?.name}</p>
                   <p className="text-xl font-bold">{job.title}</p>
-                  <p className="text-4xl font-bold tracking-tight">₱{offer.pay_confirmed}<span className="text-base font-normal text-stone-600"> / araw</span></p>
+                  <p className="big-number text-[48px]">₱{offer.pay_confirmed}<span className="ml-1 font-sans text-base font-normal text-muted">/ araw</span></p>
                   <p className="text-base">Simula: {job.deadline}</p>
-                  {offer.guaranteed && <p className="text-base text-stone-600">Walang application. Walang interview.</p>}
+                  {offer.guaranteed && <p className="text-base text-muted">Walang application. Walang interview.</p>}
                 </div>
                 {last?.passed && (
                   <p className="text-base">
@@ -147,14 +148,14 @@ export default async function Page({
                 )}
                 {offer.status === "offered" && (
                   <form action={acceptOffer.bind(null, offer.id)}>
-                    <button className={`${big} bg-emerald-800 text-white`}>Tanggapin ang offer</button>
+                    <button className={`${big} bg-primary text-white`}>Tanggapin ang offer</button>
                   </form>
                 )}
                 {offer.status === "accepted" && (
-                  <p className="rounded-xl bg-emerald-50 p-4 font-semibold text-emerald-900">Tinanggap mo na ang offer. Welcome sa team!</p>
+                  <p className="rounded-xl bg-primary/10 p-4 font-semibold text-primary">Tinanggap mo na ang offer. Welcome sa team!</p>
                 )}
                 {offer.status === "waitlisted" && (
-                  <p className="rounded-xl bg-stone-100 p-4 text-base">
+                  <p className="rounded-xl bg-paper p-4 text-base">
                     Puno na ang {job.reserved_slots} slots para sa job na ito, kaya nasa waitlist ka. Hindi pa ito garantisado.
                     Sasabihan ka namin kapag may nabakanteng slot.
                   </p>
@@ -162,11 +163,11 @@ export default async function Page({
               </>
             )}
 
-            {!offer && !a && <p className="text-stone-600">Wala ka pang assessment para sa job na ito. Maiikling task lang ito, hindi written exam.</p>}
+            {!offer && !a && <p className="text-muted">Wala ka pang assessment para sa job na ito. Maiikling task lang ito, hindi written exam.</p>}
 
             {!offer && a?.sorting === "ready" && (
-              <div className="rounded-xl bg-emerald-50 p-4">
-                <p className="font-bold text-emerald-900">Handa ka na!</p>
+              <div className="rounded-xl bg-primary/10 p-4">
+                <p className="font-bold text-primary">Handa ka na!</p>
                 <p className="mt-1 text-base">Naabot mo ang lahat ng target ng employer. Hindi mo na kailangan ng module.</p>
               </div>
             )}
@@ -183,10 +184,10 @@ export default async function Page({
                         <li key={skill}>
                           <div className="flex justify-between gap-3">
                             <span>{skill}</span>
-                            <span className="shrink-0 tabular-nums text-stone-600">{level} → {target} · {hours}h</span>
+                            <span className="shrink-0 tabular-nums text-muted">{level} → {target} · {hours}h</span>
                           </div>
-                          <div className="mt-1 h-2 overflow-hidden rounded bg-stone-200">
-                            <div className="h-full bg-emerald-700" style={{ width: `${level}%` }} />
+                          <div className="mt-1 h-2 overflow-hidden rounded bg-line">
+                            <div className="h-full bg-primary" style={{ width: `${level}%` }} />
                           </div>
                         </li>
                       );
@@ -196,26 +197,27 @@ export default async function Page({
                 <p className="text-xl font-bold">Ang module mo: ~{plan ? plan.personal_hours : gap.total} hours</p>
 
                 {!plan && !moduleOpen(mod) && (
-                  <div className="rounded-xl bg-amber-50 p-4 text-base">
-                    <p className="font-bold text-amber-900">Naka-lock pa ang module</p>
+                  <div className="rounded-xl bg-accent/20 p-4 text-base">
+                    <p className="font-bold text-ink">Naka-lock pa ang module</p>
                     <p className="mt-1">Hinihintay pa ang approval ng employer. Hindi pa ito mabubuksan hangga't hindi aprubado.</p>
                   </div>
                 )}
 
                 {!plan && moduleOpen(mod) && (
                   <>
-                    <p className="text-base text-stone-600">
+                    <p className="text-base text-muted">
                       Aprubado na ng employer ang module. {mod.sections.filter((s) => s.skill in gap.per).length} section lang ang para sa'yo.
                     </p>
                     <form action={startPlan.bind(null, candidate.id, job.id)}>
-                      <button className={`${big} bg-emerald-800 text-white`}>Simulan ang module</button>
+                      <button className={`${big} bg-primary text-white`}>Simulan ang module</button>
                     </form>
                   </>
                 )}
 
                 {plan && last && !last.passed && (
-                  <div className="rounded-xl bg-sky-50 p-4 text-base">
-                    <p className="text-lg font-bold text-sky-900">Resulta: {last.score} (pasado: {planModule?.passing_score})</p>
+                  <div className="rounded-xl bg-paper p-4 text-base">
+                    <p className="text-sm font-semibold text-muted">Resulta</p>
+                    <p className="big-number mt-1">{last.score}<span className="ml-2 font-sans text-base font-normal text-muted">pasado: {planModule?.passing_score}</span></p>
                     <p className="mt-1">{last.scored_output.explanation ?? "Naka-save ang resulta mo."}</p>
                   </div>
                 )}
@@ -224,9 +226,9 @@ export default async function Page({
                   <>
                     <div className="grid gap-3">
                       {sections.map((s) => (
-                        <Link key={s.id} href={`${home}?plan=${plan.id}&section=${s.id}`} className="rounded-xl border border-stone-300 p-4 hover:border-stone-500">
+                        <Link key={s.id} href={`${home}?plan=${plan.id}&section=${s.id}`} className="rounded-xl border border-line p-4 hover:border-muted">
                           <div className="font-semibold">{s.title}</div>
-                          <div className="mt-1 text-base text-stone-600">
+                          <div className="mt-1 text-base text-muted">
                             {gap.per[s.skill] ? `${gap.per[s.skill]} hours · ` : "Practice · "}
                             {plan.progress[s.id] ? "Tapos na ✓" : last ? "Balikan para mag-practice" : "Buksan"}
                           </div>
@@ -234,17 +236,17 @@ export default async function Page({
                       ))}
                     </div>
                     <div>
-                      <div className="h-2 overflow-hidden rounded bg-stone-200">
-                        <div className="h-full bg-emerald-700" style={{ width: `${sections.length ? (done / sections.length) * 100 : 0}%` }} />
+                      <div className="h-2 overflow-hidden rounded bg-line">
+                        <div className="h-full bg-primary" style={{ width: `${sections.length ? (done / sections.length) * 100 : 0}%` }} />
                       </div>
-                      <p className="mt-1 text-base text-stone-600">{done} sa {sections.length} section ang tapos</p>
+                      <p className="mt-1 text-base text-muted">{done} sa {sections.length} section ang tapos</p>
                     </div>
                     {unlocked ? (
-                      <Link href={`${home}?plan=${plan.id}&test=1`} className={`${big} bg-emerald-800 text-white`}>
+                      <Link href={`${home}?plan=${plan.id}&test=1`} className={`${big} bg-primary text-white`}>
                         {last ? "Mag-retake ng final test" : "Simulan ang final test"}
                       </Link>
                     ) : (
-                      <button disabled className={`${big} cursor-not-allowed bg-stone-200 text-stone-500`}>
+                      <button disabled className={`${big} cursor-not-allowed bg-line text-muted`}>
                         Final test: tapusin muna ang {sections.length - done} section
                       </button>
                     )}
@@ -254,8 +256,8 @@ export default async function Page({
             )}
 
             {a?.sorting === "not_yet" && gap && (
-              <div className="rounded-xl bg-sky-50 p-4 text-base">
-                <p className="text-lg font-bold text-sky-900">May daan para sa'yo</p>
+              <div className="rounded-xl bg-paper p-4 text-base">
+                <p className="text-lg font-bold text-primary">May daan para sa'yo</p>
                 <p className="mt-1">
                   Sa ngayon, mga ~{gap.total} oras pa ang kailangang aralin para sa job na ito, kaya uunahin muna natin ang
                   {" "}<b>Foundational Track</b>: mga basic na aralin sa pagbasa at pag-check ng detalye.

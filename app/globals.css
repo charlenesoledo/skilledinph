@@ -1,5 +1,69 @@
 @import "tailwindcss";
 
+/* Orchestrator design tokens. Only these colors are used; tints are these colors at lower opacity.
+   No gradients, no glass effects, no heavy shadows. One soft shadow, on cards only. */
+@theme {
+  --color-primary: #0b5d3b; /* dark green: actions, progress, success */
+  --color-accent: #f5c542; /* amber: badges, the stamp, highlights only */
+  --color-paper: #f7f6f3; /* warm page background */
+  --color-card: #ffffff; /* card surface */
+  --color-ink: #1e2023; /* text */
+  --color-muted: #60676e; /* secondary text */
+  --color-line: #d6d4ce; /* borders */
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-card: 0 1px 2px rgb(30 32 35 / 0.04), 0 6px 16px -6px rgb(30 32 35 / 0.1);
+}
+
 body {
-  @apply bg-stone-50 text-stone-900 antialiased;
+  @apply bg-paper font-sans text-ink antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+@layer components {
+  /* The one card treatment: 1px border, 16px radius, one soft shadow. */
+  .card {
+    @apply rounded-2xl border border-line bg-card shadow-card;
+  }
+  /* Big numbers: pay rates and scores. */
+  .big-number {
+    @apply font-display text-[40px] leading-none font-bold tracking-tight tabular-nums;
+  }
+}
+
+/* Small touches: buttons scale on hover and press, interactive cards lift 2px.
+   Transform only, and nothing moves when the viewer prefers reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  button:not(:disabled),
+  .press {
+    transition: transform 250ms ease-out;
+  }
+  button:not(:disabled):hover,
+  .press:hover {
+    transform: scale(1.02);
+  }
+  button:not(:disabled):active,
+  .press:active {
+    transform: scale(0.98);
+  }
+  .card-hover {
+    transition: transform 250ms ease-out;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }

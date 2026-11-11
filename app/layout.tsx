@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { Inter, Space_Grotesk } from "next/font/google";
 import RoleSwitcher from "@/components/RoleSwitcher";
 import { llmMode } from "@/lib/mode";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Orchestrator",
@@ -10,13 +14,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body>
-        <header className="border-b border-stone-200 bg-white">
+        <header className="border-b border-line bg-card">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-4">
-            <span className="text-xl font-bold tracking-tight">Orchestrator</span>
+            <span className="font-display text-xl font-bold tracking-tight">Orchestrator</span>
             {llmMode() === "mock" && (
-              <span className="rounded bg-amber-100 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-amber-900">Mock Mode</span>
+              <span className="rounded-md bg-accent px-2 py-1 text-xs font-semibold uppercase tracking-wide text-ink">Mock Mode</span>
             )}
             <RoleSwitcher />
           </div>

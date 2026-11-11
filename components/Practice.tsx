@@ -11,13 +11,13 @@ export default function Practice({ items }: { items: KeyedItem[] }) {
       {items.map((it, i) => {
         const sel = picked[i];
         return (
-          <div key={i} className="grid gap-2 rounded-xl border border-stone-200 p-4">
+          <div key={i} className="grid gap-2 rounded-xl border border-line p-4">
             <p>Practice {i + 1}. {it.prompt}</p>
             {it.choices.map((c, n) => {
-              const state = sel === undefined ? "" : n === it.correct_index ? "border-emerald-600 bg-emerald-50" : n === sel ? "border-amber-600 bg-amber-50" : "";
+              const state = sel === undefined ? "" : n === it.correct_index ? "border-primary bg-primary/10" : n === sel ? "border-accent bg-accent/20" : "";
               return (
                 <button key={n} type="button" onClick={() => setPicked({ ...picked, [i]: n })}
-                  className={`rounded-xl border border-stone-300 px-4 py-3 text-left ${state}`}>
+                  className={`rounded-xl border border-line px-4 py-3 text-left ${state}`}>
                   {c}
                 </button>
               );

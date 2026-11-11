@@ -56,29 +56,29 @@ export default async function Page() {
     <section>
       <h1 className="text-2xl font-bold">Orchestrator Board</h1>
       {empty && (
-        <p className="mt-2 text-stone-600">
+        <p className="mt-2 text-muted">
           No data yet. <Link href="/samples" className="font-semibold underline">Load the sample data</Link> to begin.
         </p>
       )}
       <div className="mt-6 grid gap-4 md:grid-cols-5">
         {COLUMNS.map((name) => (
           <div key={name} className="min-w-0">
-            <h2 className="border-b-2 border-stone-300 pb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">{name}</h2>
+            <h2 className="border-b-2 border-line pb-2 text-xs font-semibold uppercase tracking-wide text-muted">{name}</h2>
             <div className="mt-3 grid gap-2">
               {cols[name].map((card) => (
-                <Link key={card.key} href={card.href} className="rounded-lg border border-stone-200 bg-white p-3 hover:border-stone-400">
+                <Link key={card.key} href={card.href} className="card p-3 hover:border-muted">
                   <div className="font-semibold">{card.title}</div>
-                  <div className="text-sm text-stone-600">{card.sub}</div>
-                  <div className="mt-1 text-xs text-stone-500">{card.step}</div>
+                  <div className="text-sm text-muted">{card.sub}</div>
+                  <div className="mt-1 text-xs text-muted">{card.step}</div>
                 </Link>
               ))}
-              {cols[name].length === 0 && <p className="text-sm text-stone-400">Empty</p>}
+              {cols[name].length === 0 && <p className="text-sm text-muted">Empty</p>}
             </div>
           </div>
         ))}
       </div>
       {foundational.length > 0 && (
-        <p className="mt-6 text-sm text-stone-600">
+        <p className="mt-6 text-sm text-muted">
           Routed to the foundational track for now: {foundational.join(", ")}. No offer on this job yet, and the door stays open.
         </p>
       )}

@@ -13,7 +13,7 @@ const FIELDS: { name: string; label: string; hint: string; long?: boolean }[] = 
   { name: "bad_example", label: "Bad output example", hint: "What must be caught", long: true },
   { name: "tools_needed", label: "Tools needed", hint: "For example: smartphone with internet" },
 ];
-const input = "mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2";
+const input = "mt-1 w-full card px-3 py-2";
 
 export default async function Page() {
   const [jobs, employers] = await Promise.all([all("jobs"), all("employers")]);
@@ -22,16 +22,16 @@ export default async function Page() {
     <section className="grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
       <div>
         <h1 className="text-2xl font-bold">Job Intake</h1>
-        <p className="mt-2 text-stone-600">
+        <p className="mt-2 text-muted">
           Submit a Human Job Card: one workflow step that still needs a person. Training is only built after a real job exists.
         </p>
         {!employer ? (
-          <p className="mt-4 text-stone-600">
+          <p className="mt-4 text-muted">
             No employer yet. <Link href="/samples" className="font-semibold underline">Load the sample data</Link> first.
           </p>
         ) : (
           <form action={createJob} className="mt-6 grid gap-4">
-            <p className="text-sm text-stone-600">Posting as <b>{employer.name}</b></p>
+            <p className="text-sm text-muted">Posting as <b>{employer.name}</b></p>
             {FIELDS.map((f) => (
               <label key={f.name} className="block text-sm font-medium">
                 {f.label}
@@ -51,20 +51,20 @@ export default async function Page() {
               </label>
             </div>
             <div>
-              <button className="rounded-lg bg-emerald-800 px-4 py-2 font-semibold text-white">Save Job Card</button>
+              <button className="rounded-lg bg-primary px-4 py-2 font-semibold text-white">Save Job Card</button>
             </div>
           </form>
         )}
       </div>
       <div>
         <h2 className="text-lg font-bold">Your jobs</h2>
-        {jobs.length === 0 && <p className="mt-2 text-sm text-stone-600">No jobs yet.</p>}
+        {jobs.length === 0 && <p className="mt-2 text-sm text-muted">No jobs yet.</p>}
         <ul className="mt-3 grid gap-2">
           {jobs.map((j) => (
             <li key={j.id}>
-              <Link href={`/employer/jobs/${j.id}`} className="block rounded-lg border border-stone-200 bg-white p-3 hover:border-stone-400">
+              <Link href={`/employer/jobs/${j.id}`} className="block card p-3 hover:border-muted">
                 <div className="font-semibold">{j.title}</div>
-                <div className="mt-1 text-xs text-stone-500">
+                <div className="mt-1 text-xs text-muted">
                   Status: {j.status} · {j.reserved_slots} reserved slots · {j.target_skills.length ? `${j.target_skills.length} skills` : "skills not analyzed"}
                 </div>
               </Link>

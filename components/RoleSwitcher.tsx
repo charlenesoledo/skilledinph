@@ -23,13 +23,13 @@ export default function RoleSwitcher() {
   const links = ROLES.find((r) => r.role === active)?.links ?? [];
   return (
     <nav className="flex flex-1 flex-wrap items-center gap-x-6 gap-y-2" aria-label="Role switcher">
-      <div className="flex rounded-full border border-stone-300 p-0.5 text-sm">
+      <div className="flex rounded-full border border-line p-0.5 text-sm">
         {ROLES.map((r) => (
           <Link
             key={r.role}
             href={r.href}
             aria-current={r.role === active ? "true" : undefined}
-            className={`rounded-full px-4 py-1.5 font-medium ${r.role === active ? "bg-emerald-800 text-white" : "text-stone-600 hover:text-stone-900"}`}
+            className={`rounded-full px-4 py-1.5 font-medium ${r.role === active ? "bg-primary text-white" : "text-muted hover:text-ink"}`}
           >
             {r.role}
           </Link>
@@ -37,7 +37,7 @@ export default function RoleSwitcher() {
       </div>
       <div className="flex gap-4 text-sm">
         {links.map((l) => (
-          <Link key={l.href} href={l.href} className={path === l.href ? "font-semibold underline underline-offset-4" : "text-stone-600 hover:text-stone-900"}>
+          <Link key={l.href} href={l.href} className={path === l.href ? "font-semibold underline underline-offset-4" : "text-muted hover:text-ink"}>
             {l.label}
           </Link>
         ))}
