@@ -58,7 +58,7 @@ export default async function Page() {
   return (
     <section className="grid gap-8">
       <div>
-        <h1 className="text-3xl font-bold">Orchestrator Board</h1>
+        <h1 className="text-2xl font-bold">Orchestrator Board</h1>
         {empty && (
           <p className="mt-2 text-muted">
             No data yet. <Link href="/samples" className="font-semibold underline">Load the sample data</Link> to begin.

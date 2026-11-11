@@ -1,17 +1,21 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { MotionConfig, motion, useReducedMotion } from "motion/react";
+import { DUR_MED, EASE_ENTER } from "@/lib/motion";
 
-// Each page fades and rises in on route change. MotionConfig makes every Motion animation in the app
-// follow the viewer's reduced-motion setting.
+// Pages fade and rise in on route change, except the Board, whose only motion is the stage glide.
+// MotionConfig makes every Motion animation follow the viewer's reduced-motion setting
+// (transforms and layout moves are dropped; fades remain).
 export default function Template({ children }: { children: React.ReactNode }) {
   const reduce = useReducedMotion();
+  const board = usePathname() === "/";
   return (
     <MotionConfig reducedMotion="user">
       <motion.div
-        initial={reduce ? false : { opacity: 0, y: 8 }}
+        initial={reduce || board ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: DUR_MED, ease: EASE_ENTER }}
       >
         {children}
       </motion.div>

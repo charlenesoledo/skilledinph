@@ -2,9 +2,9 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { useCountUp } from "./useCountUp";
+import { DUR_PROGRESS, EASE_ENTER } from "@/lib/motion";
 
 type Skill = { label: string; score: number; target: number };
-const EASE = [0.16, 1, 0.3, 1] as const;
 
 // Assessment scores per skill. Bars grow from 0 to the score (scaleX, so only transform animates),
 // the numbers count up, and a tick marks the employer's target.
@@ -20,7 +20,7 @@ export default function SkillBars({ skills, delay = 0 }: { skills: Skill[]; dela
 
 function Bar({ skill, delay }: { skill: Skill; delay: number }) {
   const reduce = useReducedMotion();
-  const shown = useCountUp(skill.score, 400, delay * 1000);
+  const shown = useCountUp(skill.score, DUR_PROGRESS * 1000, delay * 1000);
   const met = skill.score >= skill.target;
   return (
     <div className="grid grid-cols-[64px_minmax(0,1fr)_56px] items-center gap-2 text-xs">
@@ -30,7 +30,7 @@ function Bar({ skill, delay }: { skill: Skill; delay: number }) {
           className={`absolute inset-0 origin-left rounded-full ${met ? "bg-primary" : "bg-accent"}`}
           initial={reduce ? false : { scaleX: 0 }}
           animate={{ scaleX: skill.score / 100 }}
-          transition={{ duration: 0.4, ease: EASE, delay }}
+          transition={{ duration: DUR_PROGRESS, ease: EASE_ENTER, delay }}
         />
         <span className="absolute inset-y-[-2px] w-0.5 bg-ink" style={{ left: `${skill.target}%` }} />
       </span>

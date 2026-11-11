@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { rememberPlacement } from "./BoardColumns";
+import { DUR_FAST, DUR_MED, DUR_PROGRESS, EASE_ENTER, EASE_STANDARD } from "@/lib/motion";
 
 // The agent runs the full demo makes, in order. The stepper paces them about 600ms apart so the
 // audience can follow. Pacing is visual only: the server runs the loop once, and the last step
@@ -18,13 +18,11 @@ const STEPS = [
   "QA Explainer",
 ];
 const STEP_MS = 600;
-const EASE = [0.16, 1, 0.3, 1] as const;
 
 export default function FullDemoRunner({
-  action, startPlacement, className,
+  action, className,
 }: {
   action: () => Promise<void>;
-  startPlacement: Record<string, "Job Secured" | "Assessing">;
   className: string;
 }) {
   const router = useRouter();
@@ -44,16 +42,15 @@ export default function FullDemoRunner({
     return () => clearTimeout(t);
   }, [active, serverDone, error]);
 
-  // All steps done: open the Board, starting its cards from the freshly loaded layout so they glide.
+  // All steps done: open the Board.
   // The page re-renders when the server action finishes, so the timer reads the latest values from
   // refs and is not cancelled by those re-renders.
-  const latest = useRef({ router, startPlacement });
-  latest.current = { router, startPlacement };
+  const latest = useRef({ router });
+  latest.current = { router };
   useEffect(() => {
     if (active !== STEPS.length || navigated.current) return;
     navigated.current = true;
     setTimeout(() => {
-      rememberPlacement(latest.current.startPlacement);
       latest.current.router.push("/");
     }, 500);
   }, [active]);
@@ -87,7 +84,7 @@ export default function FullDemoRunner({
             initial={reduce ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: EASE }}
+            transition={{ duration: DUR_MED, ease: EASE_ENTER }}
             className="card grid max-w-sm gap-0 p-5"
           >
             {STEPS.map((label, i) => {
@@ -118,7 +115,7 @@ function StepIcon({ state, reduce }: { state: "pending" | "running" | "done"; re
       <motion.span
         initial={reduce ? false : { scale: 0.6, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.25, ease: EASE }}
+        transition={{ duration: DUR_FAST, ease: EASE_STANDARD }}
         className="relative z-10 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary"
       >
         <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -131,8 +128,8 @@ function StepIcon({ state, reduce }: { state: "pending" | "running" | "done"; re
       <span className="relative z-10 grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 border-primary bg-card">
         <motion.span
           className="h-2.5 w-2.5 rounded-full bg-primary"
-          animate={reduce ? undefined : { scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
-          transition={{ duration: 0.8, repeat: Infinity, ease: "easeOut" }}
+          animate={reduce ? undefined : { scale: 1.5, opacity: 0.5 }}
+          transition={{ duration: DUR_PROGRESS, repeat: Infinity, repeatType: "reverse", ease: EASE_STANDARD }}
         />
       </span>
     );

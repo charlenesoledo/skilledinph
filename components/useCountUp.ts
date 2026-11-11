@@ -3,13 +3,16 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "motion/react";
 
-// Counts from 0 to `to` over `ms` with an ease-out curve. Shows the final value at once
-// when the viewer prefers reduced motion.
-export function useCountUp(to: number, ms = 800, delay = 0): number {
+// Ease-out curve shared by the count-ups (cubic).
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+
+// Counts from `from` to `to` over `ms`. Shows the final value at once when `ms` is 0
+// or the viewer prefers reduced motion.
+export function useCountUp(to: number, ms: number, delay = 0, from = 0): number {
   const reduce = useReducedMotion();
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState(ms > 0 && !reduce ? from : to);
   useEffect(() => {
-    if (reduce) {
+    if (reduce || ms <= 0) {
       setValue(to);
       return;
     }
@@ -19,7 +22,7 @@ export function useCountUp(to: number, ms = 800, delay = 0): number {
       const tick = (now: number) => {
         start ??= now;
         const t = Math.min(1, (now - start) / ms);
-        setValue(Math.round(to * (1 - Math.pow(1 - t, 3))));
+        setValue(Math.round(from + (to - from) * easeOut(t)));
         if (t < 1) frame = requestAnimationFrame(tick);
       };
       frame = requestAnimationFrame(tick);
@@ -28,6 +31,13 @@ export function useCountUp(to: number, ms = 800, delay = 0): number {
       clearTimeout(timer);
       cancelAnimationFrame(frame);
     };
-  }, [to, ms, delay, reduce]);
+  }, [to, ms, delay, from, reduce]);
   return value;
+}
+
+// A number that appears at its real value at once, and counts old -> new only when it changes later.
+export function useChangeCount(value: number, ms: number): number {
+  const [span, setSpan] = useState({ from: value, to: value });
+  if (span.to !== value) setSpan({ from: span.to, to: value }); // a new value arrived: count from the old one
+  return useCountUp(span.to, span.from === span.to ? 0 : ms, 0, span.from);
 }

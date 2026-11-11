@@ -15,10 +15,38 @@
   --font-display: var(--font-space-grotesk), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
   --shadow-card: 0 1px 2px rgb(30 32 35 / 0.04), 0 6px 16px -6px rgb(30 32 35 / 0.1);
+
+  /* Type scale, ratio 1.25: 11 / 14 / 16 / 18 / 22 / 28 / 44. */
+  --text-xs: 0.6875rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 2.125rem;
+  --text-4xl: 2.75rem;
+  --text-4xl--line-height: 1;
+}
+
+/* Motion tokens. These are the only easings and durations in the app (JS copies live in lib/motion.ts).
+   Only transform and opacity animate. */
+:root {
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --dur-fast: 150ms;
+  --dur-med: 300ms;
+  --dur-progress: 350ms;
 }
 
 body {
   @apply bg-paper font-sans text-ink antialiased;
+  /* Tabular numerals everywhere: peso amounts, counts and scores line up and don't jitter. */
+  font-variant-numeric: tabular-nums;
 }
 
 h1,
@@ -36,16 +64,15 @@ h3 {
   }
   /* Big numbers: pay rates and scores. */
   .big-number {
-    @apply font-display text-[40px] leading-none font-bold tracking-tight tabular-nums;
+    @apply font-display text-4xl leading-none font-bold tracking-tight tabular-nums;
   }
 }
 
-/* Small touches: buttons scale on hover and press, interactive cards lift 2px.
-   Transform only, and nothing moves when the viewer prefers reduced motion. */
+/* Button feedback (150ms) and card lift. Transform only; nothing moves when the viewer prefers reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
   button:not(:disabled),
   .press {
-    transition: transform 250ms ease-out;
+    transition: transform var(--dur-fast) var(--ease-standard);
   }
   button:not(:disabled):hover,
   .press:hover {
@@ -56,7 +83,7 @@ h3 {
     transform: scale(0.98);
   }
   .card-hover {
-    transition: transform 250ms ease-out;
+    transition: transform var(--dur-fast) var(--ease-standard);
   }
   .card-hover:hover {
     transform: translateY(-2px);
