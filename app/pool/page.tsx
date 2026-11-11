@@ -6,6 +6,10 @@ import { jobGate } from "@/lib/rules";
 import { runAllAssessments, runAssessment } from "./actions";
 import { runState } from "@/lib/runs";
 import AgentRunButton from "@/components/AgentRunButton";
+import CandidateCardBody from "@/components/CandidateCard";
+import { candidateCard, candidateStage } from "@/lib/stages";
+import { currentModule } from "@/lib/modules";
+import type { Module } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +18,11 @@ const SORT_STYLE = { ready: "bg-primary/10 text-primary", trainable: "bg-accent/
 const btn = "rounded-lg border border-line px-3 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40";
 
 export default async function Page() {
-  const [candidates, jobs, assessments, runs, offers] = await Promise.all([
-    all("candidates"), all("jobs"), all("assessments"), all("runs"), all("offers"),
+  const [candidates, jobs, assessments, runs, offers, employers, plans, profiles] = await Promise.all([
+    all("candidates"), all("jobs"), all("assessments"), all("runs"), all("offers"), all("employers"), all("candidate_plans"), all("skill_profiles"),
   ]);
+  const current = new Map<string, Module | undefined>();
+  for (const j of jobs) current.set(j.id, await currentModule(j.id));
   return (
     <section>
       <h1 className="text-2xl font-bold">Candidate Pool</h1>
@@ -44,59 +50,51 @@ export default async function Page() {
               );
             })}
           </ul>
-          <div className="mt-5 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-muted">
-                  <th className="py-2 pr-4">Candidate</th>
-                  <th className="py-2 pr-4">Location</th>
-                  {jobs.map((j) => <th key={j.id} className="py-2 pr-4">{j.title}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {candidates.map((c) => (
-                  <tr key={c.id} className="border-b border-line align-top">
-                    <td className="py-2 pr-4 font-semibold">
-                      <Link href={`/candidate/${c.id}`} className="underline-offset-4 hover:underline">{c.display_name}</Link>
-                    </td>
-                    <td className="py-2 pr-4">{c.location_label}</td>
-                    {jobs.map((j) => {
-                      const a = assessments.find((x) => x.job_id === j.id && x.candidate_id === c.id);
-                      const open = jobGate(j).open;
-                      if (a)
-                        return (
-                          <td key={j.id} className="py-2 pr-4">
-                            <span className={`rounded px-2 py-1 text-xs font-semibold ${SORT_STYLE[a.sorting]}`}>{SORT_LABEL[a.sorting]}</span>
-                            <span className="ml-2 tabular-nums text-muted">
-                              {a.total_gap_hours === 0 ? "no gap" : `gap ~${a.total_gap_hours} hours`}
-                            </span>
-                            {(() => {
-                              const o = offers.find((x) => x.job_id === j.id && x.candidate_id === c.id);
-                              if (!o) return null;
-                              return (
-                                <span className={`ml-2 rounded px-2 py-1 text-xs font-semibold ${o.guaranteed ? "bg-accent text-ink" : "bg-line text-muted"}`}>
+          <ul className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {candidates.map((c) => {
+              const stage = candidateStage(c, { assessments, plans, offers, currentModule: current });
+              return (
+                <li key={c.id} className="card grid content-start gap-4 p-5">
+                  <CandidateCardBody data={candidateCard(c, stage.since, { jobs, employers, assessments, profiles })} />
+                  {jobs.map((j) => {
+                    const a = assessments.find((x) => x.job_id === j.id && x.candidate_id === c.id);
+                    const open = jobGate(j).open;
+                    const o = offers.find((x) => x.job_id === j.id && x.candidate_id === c.id);
+                    return (
+                      <div key={j.id} className="border-t border-line pt-4 text-sm">
+                        {jobs.length > 1 && <p className="mb-2 font-medium">{j.title}</p>}
+                        {a ? (
+                          <>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className={`rounded px-2 py-1 text-xs font-semibold ${SORT_STYLE[a.sorting]}`}>{SORT_LABEL[a.sorting]}</span>
+                              <span className="tabular-nums text-muted">
+                                {a.total_gap_hours === 0 ? "no gap" : `gap ~${a.total_gap_hours} hours`}
+                              </span>
+                              {o && (
+                                <span className={`rounded px-2 py-1 text-xs font-semibold ${o.guaranteed ? "bg-accent text-ink" : "bg-line text-muted"}`}>
                                   {o.guaranteed ? `GUARANTEED · ${o.status}` : "WAITLIST · NOT GUARANTEED"}
                                 </span>
-                              );
-                            })()}
+                              )}
+                            </div>
                             <SkillBars
                               skills={j.target_skills.map((s) => ({ label: s.skill.split(" ")[0], score: a.score_per_skill[s.skill] ?? 0, target: s.target }))}
                             />
-                          </td>
-                        );
-                      return (
-                        <td key={j.id} className="py-2 pr-4">
-                          <AgentRunButton action={runAssessment.bind(null, j.id, c.id)} label="Run assessment" retryLabel="Retry assessment"
-                            state={runState(runs, "assessor", c.id)} disabled={!open} variant="secondary" pendingLabel="Running…" />
-                          {!open && <div className="mt-1 text-xs text-ink">Assessment locked (HR1)</div>}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          </>
+                        ) : (
+                          <>
+                            <AgentRunButton action={runAssessment.bind(null, j.id, c.id)} label="Run assessment" retryLabel="Retry assessment"
+                              state={runState(runs, "assessor", c.id)} disabled={!open} variant="secondary" pendingLabel="Running…" />
+                            {!open && <div className="mt-1 text-xs text-ink">Assessment locked (HR1)</div>}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <Link href={`/candidate/${c.id}`} className="text-sm font-semibold underline underline-offset-4">Open candidate view</Link>
+                </li>
+              );
+            })}
+          </ul>
           <p className="mt-4 text-xs text-muted">
             Sorting rule: per skill below target, hours = ceil((target − current) / 25) × 2. No gap is READY, up to 12 hours is
             TRAINABLE, more than 12 is NOT YET for this job and is routed to the foundational track.

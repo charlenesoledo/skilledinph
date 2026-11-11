@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { all } from "@/lib/db";
 import { currentModule } from "@/lib/modules";
-import { moduleOpen, testUnlocked } from "@/lib/rules";
+import { candidateCard, candidateStage } from "@/lib/stages";
 import type { Module } from "@/lib/types";
 import BoardColumns, { type BoardCard } from "@/components/BoardColumns";
 import BoardStats, { type BoardStatsData } from "@/components/BoardStats";
@@ -34,25 +34,16 @@ export default async function Page() {
         step: `${m.sections.length} sections · ${m.final_test.items.length}-item final test · needs employer approval`, href: `/employer/jobs/${j.id}`,
       });
   }
+  const profiles = await all("skill_profiles");
   for (const c of candidates) {
-    const a = assessments.find((x) => x.candidate_id === c.id);
-    const card = (column: BoardCard["column"], step: string, tone?: BoardCard["tone"]): BoardCard =>
-      ({ key: c.id, column, title: c.display_name, sub: c.location_label, step, href: `/candidate/${c.id}`, tone });
-    const o = offers.find((x) => x.candidate_id === c.id);
-    if (o) cards.push(card("Offered", o.guaranteed ? `GUARANTEED · ${o.status} · ₱${o.pay_confirmed}/day` : "WAITLIST · NOT GUARANTEED", o.guaranteed ? "guaranteed" : "waitlist"));
-    else if (!a) cards.push(card("Assessing", "Not assessed yet"));
-    else if (a.sorting === "ready") cards.push(card("Assessing", "READY · no gap · offer is the next step"));
-    else if (a.sorting === "trainable") {
-      const plan = plans.find((p) => p.candidate_id === c.id);
-      const doneCount = plan ? plan.assigned_sections.filter((s) => plan.progress[s]).length : 0;
-      if (plan) cards.push(card("Training", testUnlocked(plan) ? `Sections complete · final test unlocked` : `Training · ${doneCount}/${plan.assigned_sections.length} sections · ~${plan.personal_hours} hours`));
-      else if (moduleOpen(current.get(a.job_id))) cards.push(card("Training", `TRAINABLE · module ~${a.total_gap_hours} hours · module open, not started`));
-      else cards.push(card("Awaiting Employer Approval", `TRAINABLE · gap ~${a.total_gap_hours} hours · waiting for an approved module`));
-    } else {
-      // Not on a column: routed to the foundational track. Kept as a card so it can leave the board visibly.
-      cards.push(card("off", "Foundational track"));
-      foundational.push(c.display_name);
-    }
+    // Stage rules live in lib/stages.ts, shared with the Pool. "off" = routed to the foundational track;
+    // kept as a card so it can leave the board visibly.
+    const stage = candidateStage(c, { assessments, plans, offers, currentModule: current });
+    if (stage.column === "off") foundational.push(c.display_name);
+    cards.push({
+      key: c.id, column: stage.column, title: c.display_name, sub: c.location_label, step: stage.step, href: `/candidate/${c.id}`,
+      tone: stage.tone, person: candidateCard(c, stage.since, { jobs, employers, assessments, profiles }),
+    });
   }
   const empty = jobs.length === 0 && candidates.length === 0;
 

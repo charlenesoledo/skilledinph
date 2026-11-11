@@ -5,6 +5,8 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { DUR_FAST, DUR_MED, EASE_STANDARD } from "@/lib/motion";
+import type { CandidateCardData } from "@/lib/stages";
+import CandidateCardBody from "./CandidateCard";
 
 export const COLUMNS = ["Job Secured", "Assessing", "Training", "Awaiting Employer Approval", "Offered"] as const;
 type Column = (typeof COLUMNS)[number];
@@ -18,6 +20,7 @@ export type BoardCard = {
   tone?: "guaranteed" | "waitlist";
   pay?: number | null;
   seats?: { taken: number; slots: number };
+  person?: CandidateCardData; // set on candidate cards
 };
 
 // How often the open Board re-reads the data, so stage changes made elsewhere (another tab,
@@ -63,8 +66,12 @@ export default function BoardColumns({ cards }: { cards: BoardCard[] }) {
           const inColumn = cards.filter((c) => c.column === name);
           return (
             <div key={name} className="min-w-0">
-              <h2 className="border-b-2 border-line pb-2 font-sans text-xs font-semibold uppercase tracking-wide text-muted">
-                {name}
+              <h2 className="flex items-center gap-2 border-b-2 border-line pb-2 font-sans text-xs font-semibold uppercase tracking-wide text-muted">
+                <ColumnIcon column={name} />
+                <span className="min-w-0 flex-1">{name}</span>
+                <span className="rounded-full bg-line px-2 py-0.5 text-ink tabular-nums" aria-label={`${inColumn.length} in ${name}`}>
+                  {inColumn.length}
+                </span>
               </h2>
               <div className="mt-3 grid gap-3">
                 <AnimatePresence mode="popLayout" initial={false} custom={now}>
@@ -112,6 +119,14 @@ export default function BoardColumns({ cards }: { cards: BoardCard[] }) {
 }
 
 function CardBody({ card }: { card: BoardCard }) {
+  if (card.person)
+    return (
+      <Link href={card.href} className="card block p-4 hover:border-muted">
+        <CandidateCardBody data={card.person}>
+          <StatusLine card={card} />
+        </CandidateCardBody>
+      </Link>
+    );
   return (
     <Link href={card.href} className="card block p-4 hover:border-muted">
       <div className="font-semibold">{card.title}</div>
@@ -128,13 +143,35 @@ function CardBody({ card }: { card: BoardCard }) {
           <span className="ml-1 font-sans text-xs font-normal text-muted">seats</span>
         </p>
       )}
-      {card.tone ? (
-        <span className={`mt-2 inline-block rounded-md px-2 py-1 text-xs font-semibold ${card.tone === "guaranteed" ? "bg-accent text-ink" : "bg-line text-ink"}`}>
-          {card.step}
-        </span>
-      ) : (
-        <div className="mt-2 text-xs text-muted">{card.step}</div>
-      )}
+      <div className="mt-2">
+        <StatusLine card={card} />
+      </div>
     </Link>
+  );
+}
+
+function StatusLine({ card }: { card: BoardCard }) {
+  return card.tone ? (
+    <span className={`inline-block rounded-md px-2 py-1 text-xs font-semibold ${card.tone === "guaranteed" ? "bg-accent text-ink" : "bg-line text-ink"}`}>
+      {card.step}
+    </span>
+  ) : (
+    <div className="text-xs text-muted">{card.step}</div>
+  );
+}
+
+// Column icons: simple line drawings that sit beside the column's name and count, never instead of them.
+function ColumnIcon({ column }: { column: Column }) {
+  const paths: Record<Column, string> = {
+    "Job Secured": "M3 7h18v12H3zM8 7V5h8v2", // briefcase
+    Assessing: "M8 4h8v3H8zM6 6h12v14H6zM9 12l2 2 4-4", // clipboard with tick
+    Training: "M4 5h7a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-7a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h7z", // open book
+    "Awaiting Employer Approval": "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2", // clock
+    Offered: "M12 3l2.4 2 3.1-.3.7 3 2.6 1.8-1.3 2.8 1.3 2.8-2.6 1.8-.7 3-3.1-.3L12 21l-2.4-2-3.1.3-.7-3L3.2 14.5l1.3-2.8L3.2 9l2.6-1.8.7-3 3.1.3zM9 12l2 2 4-4", // seal with tick
+  };
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d={paths[column]} />
+    </svg>
   );
 }
