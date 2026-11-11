@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { all, clearAll, get, getFailNext, setFailNext } from "@/lib/db";
+import { all, clearAll, dbStats, get, getFailNext, setFailNext, storageLabel } from "@/lib/db";
 import { SAMPLE_JOB_ID, addFourthCandidate, loadSampleData } from "@/lib/sample-data";
 import { currentModule } from "@/lib/modules";
 import { completeSectionCore, submitTestCore } from "@/lib/training";
@@ -40,6 +40,8 @@ const form = (key: string, value: string) => {
 // Steps the sample job through the whole loop with no manual data entry, using the same actions
 // and rules as the screens. An agent step that fails is retried once (HR7).
 export async function runFullDemo() {
+  const started = Date.now();
+  const callsBefore = dbStats.calls;
   await loadSampleData();
   const J = SAMPLE_JOB_ID;
   const job = async () => (await get("jobs", J))!;
@@ -67,6 +69,7 @@ export async function runFullDemo() {
 
   for (const o of await all("offers")) if (o.status === "offered") await acceptOffer(o.id);
   await rateCandidate(J, "cand_jomar", form("stars", "5"));
+  console.log(`Full demo: ${dbStats.calls - callsBefore} database calls in ${((Date.now() - started) / 1000).toFixed(1)}s (${storageLabel})`);
   revalidatePath("/", "layout");
   redirect("/");
 }

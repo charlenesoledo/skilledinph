@@ -131,18 +131,20 @@ export async function editPassingScore(jobId: string, form: FormData) {
 // Rule: each of the job's skills moves by (stars - 3) * 2 points, kept within 0-100.
 export async function rateCandidate(jobId: string, candidateId: string, form: FormData) {
   const stars = Math.round(Number(form.get("stars")));
-  const [job, offers, ratings] = await Promise.all([get("jobs", jobId), all("offers"), all("ratings")]);
+  const [job, offers, ratings, profiles] = await Promise.all([get("jobs", jobId), all("offers"), all("ratings"), all("skill_profiles")]);
   if (!job || !(stars >= 1 && stars <= 5)) return;
   if (!offers.some((o) => o.job_id === jobId && o.candidate_id === candidateId && o.status === "accepted")) return;
   if (ratings.some((r) => r.job_id === jobId && r.candidate_id === candidateId)) return;
   const now = new Date().toISOString();
-  await insert("ratings", {
-    id: `rate_${crypto.randomUUID().slice(0, 8)}`, job_id: jobId, candidate_id: candidateId, employer_id: job.employer_id,
-    stars, note: text(form, "note"), created_at: now,
-  });
   const skills = new Set(job.target_skills.map((s) => s.skill));
-  for (const p of await all("skill_profiles"))
-    if (p.candidate_id === candidateId && skills.has(p.skill))
-      await update("skill_profiles", p.id, { level: Math.max(0, Math.min(100, p.level + (stars - 3) * 2)), updated_at: now, source: "job_rating" });
+  await Promise.all([
+    insert("ratings", {
+      id: `rate_${crypto.randomUUID().slice(0, 8)}`, job_id: jobId, candidate_id: candidateId, employer_id: job.employer_id,
+      stars, note: text(form, "note"), created_at: now,
+    }),
+    ...profiles
+      .filter((p) => p.candidate_id === candidateId && skills.has(p.skill))
+      .map((p) => update("skill_profiles", p.id, { level: Math.max(0, Math.min(100, p.level + (stars - 3) * 2)), updated_at: now, source: "job_rating" })),
+  ]);
   revalidatePath("/", "layout");
 }

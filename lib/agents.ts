@@ -159,7 +159,8 @@ export async function runAgent<K extends AgentName>(
   name: K, input: unknown, ref: { type: string; id: string },
 ): Promise<AgentResult<K>> {
   // HR7: one retry only. After a failure and a failed retry, the step stays failed.
-  if (runState(await all("runs"), name, ref.id).exhausted)
+  const [runs, failNext] = await Promise.all([all("runs"), getFailNext()]);
+  if (runState(runs, name, ref.id).exhausted)
     return { ok: false, error: "Retry limit reached: this run failed and its one retry also failed." };
 
   const started_at = new Date().toISOString();
@@ -169,7 +170,7 @@ export async function runAgent<K extends AgentName>(
   let error: string | null = null;
 
   try {
-    if (await getFailNext()) {
+    if (failNext) {
       await setFailNext(false);
       throw new Error("Simulated failure (demo switch): the agent returned no usable output.");
     }

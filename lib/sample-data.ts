@@ -1,5 +1,5 @@
 // Spec Section 9 sample data. Everything here is fictional.
-import { clearAll, get, insert } from "./db";
+import { clearAll, get, insert, insertMany } from "./db";
 import type { Candidate, Employer, Job } from "./types";
 
 export const SAMPLE_EMPLOYER_ID = "emp_tidynest";
@@ -21,7 +21,6 @@ export async function loadSampleData() {
   const employer: Employer = {
     id: SAMPLE_EMPLOYER_ID, name: "TidyNest Online", contact_label: "Operations lead (fictional)", created_at: now,
   };
-  await insert("employers", employer);
 
   // The Job Card as the employer submits it. Target skills are filled by the Job Analyzer (Step 3)
   // and pay by the rate step (Step 4), so the job starts as a draft.
@@ -37,20 +36,17 @@ export async function loadSampleData() {
     rate_band_demo: null, pay_confirmed: null, pay_status: "proposed",
     deadline: "2026-12-01", tools_needed: "Smartphone with internet", status: "draft",
   };
-  await insert("jobs", job);
+  await Promise.all([insert("employers", employer), insert("jobs", job)]);
 
   const people: [string, string, string][] = [
     ["cand_maria", "Maria", "Metro Manila"],
     ["cand_jomar", "Jomar", "Central Luzon"],
     ["cand_rhea", "Rhea", "Western Visayas"],
   ];
-  for (const [id, display_name, location_label] of people) {
-    const c: Candidate = {
-      id, display_name, phone_label: "Android phone (fictional)", location_label,
-      foundational_level: "Basic literacy, Taglish fluent", created_at: now,
-    };
-    await insert("candidates", c);
-  }
+  await insertMany("candidates", people.map(([id, display_name, location_label]): Candidate => ({
+    id, display_name, phone_label: "Android phone (fictional)", location_label,
+    foundational_level: "Basic literacy, Taglish fluent", created_at: now,
+  })));
 }
 
 // Spec Section 9: a 4th fictional candidate may be added to prove HR5 (seats full -> waitlist, NOT GUARANTEED).

@@ -12,7 +12,11 @@ export const usingSupabase = Boolean(SB_URL && SB_KEY);
 export const storageLabel = usingSupabase ? "Supabase" : "Local JSON (/data)";
 
 // ---------- Supabase (PostgREST over fetch, no extra dependency) ----------
+// Counts database round trips, so slow flows can be measured (see runFullDemo).
+export const dbStats = { calls: 0 };
+
 async function sb(pathAndQuery: string, init: RequestInit & { prefer?: string } = {}): Promise<unknown> {
+  dbStats.calls++;
   const res = await fetch(`${SB_URL}/rest/v1/${pathAndQuery}`, {
     ...init,
     cache: "no-store",
@@ -36,17 +40,33 @@ const byId = (id: string) => `id=eq.${encodeURIComponent(id)}`;
 // Vercel's project directory is read-only at runtime; /tmp is writable there but not shared between instances.
 const DIR = process.env.VERCEL ? "/tmp/orchestrator-data" : path.join(process.cwd(), "data");
 const file = (t: TableName) => path.join(DIR, `${t}.json`);
-async function readFile<T extends TableName>(table: T): Promise<Tables[T][]> {
+// Each JSON call reads and rewrites a whole file, so calls run one at a time; otherwise two updates
+// made in parallel (Promise.all) would overwrite each other. Supabase calls are not queued.
+let queue: Promise<unknown> = Promise.resolve();
+function locked<R>(fn: () => Promise<R>): Promise<R> {
+  const run = queue.then(fn);
+  queue = run.catch(() => undefined);
+  return run;
+}
+async function readFileRaw<T extends TableName>(table: T): Promise<Tables[T][]> {
   try {
     return JSON.parse(await fs.readFile(file(table), "utf8"));
   } catch {
     return [];
   }
 }
-async function writeFile<T extends TableName>(table: T, rows: Tables[T][]) {
+async function writeFileRaw<T extends TableName>(table: T, rows: Tables[T][]) {
   await fs.mkdir(DIR, { recursive: true });
   await fs.writeFile(file(table), JSON.stringify(rows, null, 2));
 }
+const readFile = <T extends TableName>(table: T) => locked(() => readFileRaw(table));
+const writeFile = <T extends TableName>(table: T, rows: Tables[T][]) => locked(() => writeFileRaw(table, rows));
+const modifyFile = <T extends TableName, R>(table: T, fn: (rows: Tables[T][]) => { rows: Tables[T][]; result: R }) =>
+  locked(async () => {
+    const { rows, result } = fn(await readFileRaw(table));
+    await writeFileRaw(table, rows);
+    return result;
+  });
 
 // ---------- Public API ----------
 export async function all<T extends TableName>(table: T): Promise<Tables[T][]> {
@@ -66,7 +86,16 @@ export async function get<T extends TableName>(table: T, id: string): Promise<Ta
 export async function insert<T extends TableName>(table: T, row: Tables[T]): Promise<Tables[T]> {
   const clean = strip(row);
   if (usingSupabase) await sb(table, { method: "POST", body: JSON.stringify(clean), prefer: "return=minimal" });
-  else await writeFile(table, [...(await readFile(table)), clean]);
+  else await modifyFile(table, (rows) => ({ rows: [...rows, clean], result: null }));
+  return clean;
+}
+
+// Several rows into one table in a single round trip, keeping their order.
+export async function insertMany<T extends TableName>(table: T, rows: Tables[T][]): Promise<Tables[T][]> {
+  const clean = rows.map(strip);
+  if (clean.length === 0) return clean;
+  if (usingSupabase) await sb(table, { method: "POST", body: JSON.stringify(clean), prefer: "return=minimal" });
+  else await modifyFile(table, (rows) => ({ rows: [...rows, ...clean], result: null }));
   return clean;
 }
 
@@ -78,25 +107,23 @@ export async function update<T extends TableName>(table: T, id: string, patch: P
     if (!rows?.[0]) throw new Error(`${table}: no row with id ${id}`);
     return strip(rows[0]);
   }
-  const rows = await readFile(table);
-  const i = rows.findIndex((r) => r.id === id);
-  if (i < 0) throw new Error(`${table}: no row with id ${id}`);
-  rows[i] = { ...rows[i], ...patch };
-  await writeFile(table, rows);
-  return rows[i];
+  return modifyFile(table, (rows) => {
+    const i = rows.findIndex((r) => r.id === id);
+    if (i < 0) throw new Error(`${table}: no row with id ${id}`);
+    rows[i] = { ...rows[i], ...patch };
+    return { rows, result: rows[i] };
+  });
 }
 
 export async function clearAll() {
-  for (const t of TABLE_NAMES) {
-    if (usingSupabase) await sb(`${t}?id=neq.__none__`, { method: "DELETE", prefer: "return=minimal" });
-    else await writeFile(t, []);
-  }
+  if (usingSupabase)
+    await Promise.all(TABLE_NAMES.map((t) => sb(`${t}?id=neq.__none__`, { method: "DELETE", prefer: "return=minimal" })));
+  else for (const t of TABLE_NAMES) await writeFile(t, []);
 }
 
 export async function counts(): Promise<Record<TableName, number>> {
-  const out = {} as Record<TableName, number>;
-  for (const t of TABLE_NAMES) out[t] = (await all(t)).length;
-  return out;
+  const lengths = await Promise.all(TABLE_NAMES.map(async (t) => (await all(t)).length));
+  return Object.fromEntries(TABLE_NAMES.map((t, i) => [t, lengths[i]])) as Record<TableName, number>;
 }
 
 // Demo-only switch for showing HR7: when set, the next agent run fails once.
