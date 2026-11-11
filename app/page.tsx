@@ -4,6 +4,7 @@ import { currentModule } from "@/lib/modules";
 import { moduleOpen, testUnlocked } from "@/lib/rules";
 import type { Module } from "@/lib/types";
 import BoardColumns, { type BoardCard } from "@/components/BoardColumns";
+import BoardStats, { type BoardStatsData } from "@/components/BoardStats";
 
 export const dynamic = "force-dynamic";
 
@@ -55,16 +56,29 @@ export default async function Page() {
   }
   const empty = jobs.length === 0 && candidates.length === 0;
 
+  // Summary strip, computed from the data on every render.
+  const pays = jobs.filter((j) => j.pay_status === "confirmed" && j.pay_confirmed).map((j) => j.pay_confirmed as number);
+  const stats: BoardStatsData = {
+    jobsSecured: jobs.filter((j) => j.pay_status === "confirmed").length,
+    seatsTaken: jobs.reduce((n, j) => n + j.seats_taken, 0),
+    seatsTotal: jobs.reduce((n, j) => n + j.reserved_slots, 0),
+    payLow: pays.length ? Math.min(...pays) : 0,
+    payHigh: pays.length ? Math.max(...pays) : 0,
+    guaranteedOffers: offers.filter((o) => o.guaranteed).length,
+  };
+
   return (
     <section className="grid gap-8">
       <div>
         <h1 className="text-2xl font-bold">Orchestrator Board</h1>
+        <p className="mt-1 text-muted">Training ends in work, not just a certificate.</p>
         {empty && (
           <p className="mt-2 text-muted">
             No data yet. <Link href="/samples" className="font-semibold underline">Load the sample data</Link> to begin.
           </p>
         )}
       </div>
+      <BoardStats stats={stats} />
       <BoardColumns cards={cards} />
       {foundational.length > 0 && (
         <p className="text-sm text-muted">
