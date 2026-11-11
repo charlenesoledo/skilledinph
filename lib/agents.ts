@@ -5,12 +5,14 @@ import { insert } from "./db";
 import { llmMode } from "./mode";
 import type { KeyedItem, TargetSkill } from "./types";
 import { SAMPLE_ASSESSMENT_ITEMS } from "./assessment-items";
+import { SAMPLE_MODULE } from "./sample-module";
 import { lookupBand } from "./rate-table";
 
 export type AgentOutputs = {
   job_analyzer: { skills: TargetSkill[]; rubric: string[] };
   rate_research: { band_low: number; band_high: number; basis: string };
   assessor: { items: KeyedItem[] };
+  module_builder: typeof SAMPLE_MODULE;
 };
 export type AgentName = keyof AgentOutputs;
 
@@ -27,6 +29,13 @@ const SYSTEM: Record<AgentName, string> = {
     "choose the reply, fix the detail) with ONE keyed correct answer. Output JSON only: " +
     "{items: [{skill, prompt, choices, correct_index}]}. 6 items, covering every target skill at least once. " +
     "Plain language, phone-readable.",
+  module_builder:
+    "You build a training module for ONE job from the employer's rubric and good/bad examples — nothing generic. " +
+    "One section per skill. Each section: a short Taglish lesson (max 150 words), one worked example, 3 practice items " +
+    "with keys. End with a final test of 5 keyed items and a proposed_passing_score. Output JSON only, in this shape: " +
+    "{sections: [{skill, title, lesson_text, worked_example, practice_items: [{skill, prompt, choices, correct_index}]}], " +
+    "final_test: {items: [{skill, prompt, choices, correct_index}], rubric: [checklist items]}, proposed_passing_score}. " +
+    "Never teach anything the employer's examples contradict.",
 };
 
 const MOCK: { [K in AgentName]: (input: unknown) => AgentOutputs[K] } = {
@@ -48,6 +57,7 @@ const MOCK: { [K in AgentName]: (input: unknown) => AgentOutputs[K] } = {
     return { band_low: row.low, band_high: row.high, basis: "reference table (demo data)" };
   },
   assessor: () => ({ items: SAMPLE_ASSESSMENT_ITEMS }),
+  module_builder: () => SAMPLE_MODULE,
 };
 
 const validItem = (i: KeyedItem) =>
@@ -70,6 +80,17 @@ const VALID: { [K in AgentName]: (o: unknown) => boolean } = {
   assessor: (o) => {
     const x = o as AgentOutputs["assessor"];
     return Array.isArray(x?.items) && x.items.length === 6 && x.items.every(validItem);
+  },
+  module_builder: (o) => {
+    const x = o as AgentOutputs["module_builder"];
+    return (
+      Array.isArray(x?.sections) && x.sections.length >= 1 &&
+      x.sections.every((s) => typeof s.skill === "string" && typeof s.title === "string" && typeof s.lesson_text === "string" &&
+        typeof s.worked_example === "string" && Array.isArray(s.practice_items) && s.practice_items.length === 3 && s.practice_items.every(validItem)) &&
+      Array.isArray(x.final_test?.items) && x.final_test.items.length === 5 && x.final_test.items.every(validItem) &&
+      Array.isArray(x.final_test.rubric) &&
+      typeof x.proposed_passing_score === "number" && x.proposed_passing_score >= 0 && x.proposed_passing_score <= 100
+    );
   },
 };
 

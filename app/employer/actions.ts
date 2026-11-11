@@ -6,6 +6,8 @@ import { all, get, insert, update } from "@/lib/db";
 import { runAgent } from "@/lib/agents";
 import type { Job } from "@/lib/types";
 import { DEFAULT_RATE, RATE_TABLE, bandLabel } from "@/lib/rate-table";
+import { currentModule, moduleVersions } from "@/lib/modules";
+import { jobGate } from "@/lib/rules";
 
 const text = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 
@@ -58,5 +60,69 @@ export async function confirmRate(jobId: string, form: FormData) {
   const pay = Math.round(Number(form.get("pay")));
   if (!job || job.status !== "draft" || !job.rate_band_demo || !(pay > 0)) return;
   await update("jobs", job.id, { pay_confirmed: pay, pay_status: "confirmed", status: "active" });
+  revalidatePath("/", "layout");
+}
+
+// ---- Module Builder and the Employer Approval Gate (spec Section 6, steps 6 and 7) ----
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+const scoreFrom = (form: FormData, fallback: number) => {
+  const n = Math.round(Number(form.get("passing_score")));
+  return form.get("passing_score") !== null && n >= 0 && n <= 100 ? n : fallback;
+};
+
+async function generateModule(job: Job, version: number, employer_notes: string) {
+  const res = await runAgent(
+    "module_builder",
+    { title: job.title, skills: job.target_skills, rubric: job.rubric, good_example: job.good_example, bad_example: job.bad_example, employer_notes },
+    { type: "job", id: job.id },
+  );
+  if (!res.ok) return false;
+  await insert("modules", {
+    id: `mod_${crypto.randomUUID().slice(0, 8)}`, job_id: job.id, version,
+    sections: res.output.sections.map((s) => ({ ...s, id: `sec_${slug(s.skill)}` })),
+    final_test: res.output.final_test,
+    proposed_passing_score: res.output.proposed_passing_score, passing_score: res.output.proposed_passing_score,
+    status: "generated", employer_notes,
+  });
+  return true;
+}
+
+export async function buildModule(jobId: string) {
+  const job = await get("jobs", jobId);
+  if (!job || !jobGate(job).open) return; // HR1: needs reserved slots and confirmed pay
+  if (await currentModule(jobId)) return;
+  if (await generateModule(job, 1, "")) await update("jobs", job.id, { status: "module_pending_approval" });
+  revalidatePath("/", "layout");
+}
+
+export async function approveModule(jobId: string, form: FormData) {
+  const [job, mod] = await Promise.all([get("jobs", jobId), currentModule(jobId)]);
+  if (!job || !mod || mod.status !== "generated") return;
+  await update("modules", mod.id, { passing_score: scoreFrom(form, mod.passing_score), status: "employer_approved" });
+  if (job.status === "module_pending_approval") await update("jobs", job.id, { status: "live" });
+  revalidatePath("/", "layout");
+}
+
+// The agent regenerates once with the employer's notes, then it is back at the gate.
+export async function requestChanges(jobId: string, form: FormData) {
+  const [job, versions] = await Promise.all([get("jobs", jobId), moduleVersions(jobId)]);
+  const mod = versions.at(-1);
+  if (!job || !mod || mod.status === "employer_approved") return;
+  const alreadyRegenerated = versions.some((v) => v.status === "changes_requested" && v.id !== mod.id);
+  if (alreadyRegenerated) return;
+  const notes = mod.status === "changes_requested" ? mod.employer_notes : text(form, "employer_notes");
+  if (!notes) return;
+  if (mod.status === "generated") await update("modules", mod.id, { status: "changes_requested", employer_notes: notes });
+  await generateModule(job, mod.version + 1, notes);
+  revalidatePath("/", "layout");
+}
+
+// HR6: an edit after approval creates a new version. Candidates who already started keep theirs.
+export async function editPassingScore(jobId: string, form: FormData) {
+  const mod = await currentModule(jobId);
+  if (!mod || mod.status !== "employer_approved") return;
+  const passing_score = scoreFrom(form, mod.passing_score);
+  if (passing_score === mod.passing_score) return;
+  await insert("modules", { ...mod, id: `mod_${crypto.randomUUID().slice(0, 8)}`, version: mod.version + 1, passing_score });
   revalidatePath("/", "layout");
 }

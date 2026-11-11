@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { all, get } from "@/lib/db";
-import { gapHours, jobGate } from "@/lib/rules";
+import { gapHours, jobGate, moduleOpen } from "@/lib/rules";
+import { currentModule } from "@/lib/modules";
+import type { Module } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       </section>
     );
   const [jobs, employers, assessments] = await Promise.all([all("jobs"), all("employers"), all("assessments")]);
+  const current = new Map<string, Module | undefined>();
+  for (const j of jobs) current.set(j.id, await currentModule(j.id));
 
   return (
     <section className="mx-auto grid max-w-[480px] gap-5 text-lg">
@@ -22,6 +26,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       {jobs.filter((j) => jobGate(j).open).map((job) => {
         const a = assessments.find((x) => x.job_id === job.id && x.candidate_id === candidate.id);
         const gap = a ? gapHours(a.score_per_skill, job.target_skills) : null;
+        const mod = current.get(job.id);
         return (
           <div key={job.id} className="grid gap-4 rounded-2xl border border-stone-200 bg-white p-5">
             <div>
@@ -62,6 +67,19 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                   </ul>
                 </div>
                 <p className="text-xl font-bold">Ang module mo: ~{gap.total} hours</p>
+                {moduleOpen(mod) ? (
+                  <div className="rounded-xl bg-emerald-50 p-4 text-base">
+                    <p className="font-bold text-emerald-900">Bukas na ang module mo</p>
+                    <ul className="mt-2 grid list-disc gap-1 pl-5">
+                      {mod.sections.filter((s) => s.skill in gap.per).map((s) => <li key={s.id}>{s.title}</li>)}
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="rounded-xl bg-amber-50 p-4 text-base">
+                    <p className="font-bold text-amber-900">Naka-lock pa ang module</p>
+                    <p className="mt-1">Hinihintay pa ang approval ng employer. Hindi pa ito mabubuksan hangga't hindi aprubado.</p>
+                  </div>
+                )}
               </>
             )}
 

@@ -32,3 +32,9 @@ export function sortByGap(totalGapHours: number): Sorting {
   if (totalGapHours === 0) return "ready";
   return totalGapHours <= MAX_TRAINABLE_HOURS ? "trainable" : "not_yet";
 }
+
+// HR2: a candidate can only start a module whose status is EMPLOYER-APPROVED.
+import type { Module } from "./types";
+export function moduleOpen(module: Module | undefined): module is Module {
+  return module?.status === "employer_approved";
+}

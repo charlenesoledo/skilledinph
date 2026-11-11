@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { all, get } from "@/lib/db";
 import { analyzeJob, confirmRate, proposeRate } from "../../actions";
+import ModulePanel from "./ModulePanel";
 
 export const dynamic = "force-dynamic";
 
@@ -124,6 +125,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           )}
         </div>
       </div>
+
+      <ModulePanel job={job} />
     </section>
   );
 }

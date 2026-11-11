@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { all } from "@/lib/db";
+import { currentModule } from "@/lib/modules";
+import { moduleOpen } from "@/lib/rules";
+import type { Module } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +13,8 @@ export default async function Page() {
   const [jobs, employers, candidates, assessments] = await Promise.all([
     all("jobs"), all("employers"), all("candidates"), all("assessments"),
   ]);
+  const current = new Map<string, Module | undefined>();
+  for (const j of jobs) current.set(j.id, await currentModule(j.id));
   const cols: Record<(typeof COLUMNS)[number], Card[]> = {
     "Job Secured": [], Assessing: [], Training: [], "Awaiting Employer Approval": [], Offered: [],
   };
@@ -20,14 +25,22 @@ export default async function Page() {
       step: `Status: ${j.status} · ${j.pay_status === "confirmed" ? `₱${j.pay_confirmed}/day` : "pay not confirmed"} · Seats ${j.seats_taken}/${j.reserved_slots}`,
       href: `/employer/jobs/${j.id}`,
     });
+    const m = current.get(j.id);
+    if (m && m.status !== "employer_approved")
+      cols["Awaiting Employer Approval"].push({
+        key: m.id, title: `Module v${m.version}`, sub: j.title,
+        step: `${m.sections.length} sections · ${m.final_test.items.length}-item final test · needs employer approval`, href: `/employer/jobs/${j.id}`,
+      });
   }
   for (const c of candidates) {
     const a = assessments.find((x) => x.candidate_id === c.id);
     const card = (step: string): Card => ({ key: c.id, title: c.display_name, sub: c.location_label, step, href: `/candidate/${c.id}` });
     if (!a) cols.Assessing.push(card("Not assessed yet"));
     else if (a.sorting === "ready") cols.Assessing.push(card("READY · no gap · offer is the next step"));
-    else if (a.sorting === "trainable")
-      cols["Awaiting Employer Approval"].push(card(`TRAINABLE · gap ~${a.total_gap_hours} hours · waiting for an approved module`));
+    else if (a.sorting === "trainable") {
+      if (moduleOpen(current.get(a.job_id))) cols.Training.push(card(`TRAINABLE · module ~${a.total_gap_hours} hours · module open`));
+      else cols["Awaiting Employer Approval"].push(card(`TRAINABLE · gap ~${a.total_gap_hours} hours · waiting for an approved module`));
+    }
     else foundational.push(c.display_name);
   }
   const empty = jobs.length === 0 && candidates.length === 0;
