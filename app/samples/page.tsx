@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { all, counts, getFailNext, storageLabel } from "@/lib/db";
+import PendingButton from "@/components/PendingButton";
 import { addFourth, loadSamples, resetSamples, runFullDemo, toggleFailNext } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -17,13 +18,13 @@ export default async function Page() {
           Loads the fictional sample set: TidyNest Online, the Listing &amp; Reply Checker job, and candidates Maria, Jomar and Rhea.
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
-          <form action={loadSamples}><button className={primary}>Load sample data</button></form>
-          <form action={resetSamples}><button className={secondary}>Reset all data</button></form>
-          <form action={runFullDemo}><button className={primary}>Run full demo</button></form>
+          <form action={loadSamples}><PendingButton label="Load sample data" pendingLabel="Loading…" className={primary} /></form>
+          <form action={resetSamples}><PendingButton label="Reset all data" pendingLabel="Resetting…" className={secondary} /></form>
+          <form action={runFullDemo}><PendingButton label="Run full demo" pendingLabel="Running the full loop… (about 30 seconds)" className={primary} /></form>
         </div>
         <p className="mt-3 text-sm text-stone-600">
           Run full demo reloads the sample data and steps the job through the whole loop: analyze, rate, assess, build and approve
-          the module, train, test, offer, accept, and rate. Then open the <Link href="/" className="font-semibold underline">Board</Link>.
+          the module, train, test, offer, accept, and rate, then opens the <Link href="/" className="font-semibold underline">Board</Link>.
         </p>
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <form action={addFourth}><button disabled={c.candidates === 0} className={secondary}>Add 4th candidate</button></form>

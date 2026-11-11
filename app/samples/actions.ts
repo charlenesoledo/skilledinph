@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { all, clearAll, get, getFailNext, setFailNext } from "@/lib/db";
 import { SAMPLE_JOB_ID, addFourthCandidate, loadSampleData } from "@/lib/sample-data";
 import { currentModule } from "@/lib/modules";
@@ -67,4 +68,5 @@ export async function runFullDemo() {
   for (const o of await all("offers")) if (o.status === "offered") await acceptOffer(o.id);
   await rateCandidate(J, "cand_jomar", form("stars", "5"));
   revalidatePath("/", "layout");
+  redirect("/");
 }
