@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
+import { DUR_FAST, DUR_MED, EASE_STANDARD } from "@/lib/motion";
 
 export const COLUMNS = ["Job Secured", "Assessing", "Training", "Awaiting Employer Approval", "Offered"] as const;
 type Column = (typeof COLUMNS)[number];
@@ -17,99 +19,87 @@ export type BoardCard = {
   pay?: number | null;
   seats?: { taken: number; slots: number };
 };
-type Placement = Record<string, Column | "off">;
 
-// The board remembers where each card was the last time it was drawn, in this browser tab only.
-// On the next visit, cards start where they were and glide to where they are now.
-// Visual only: the columns themselves always come from the server.
-const STORAGE_KEY = "orchestrator:board-placement";
-export function rememberPlacement(placement: Placement) {
-  try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(placement));
-  } catch {}
-}
-function recallPlacement(): Placement | null {
-  try {
-    return JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? "null");
-  } catch {
-    return null;
-  }
-}
+// How often the open Board re-reads the data, so stage changes made elsewhere (another tab,
+// the presenter's phone, Run full demo) appear here and glide into place.
+const REFRESH_MS = 3000;
 
-const EASE = [0.16, 1, 0.3, 1] as const; // ease-out
-const STAGGER = 0.06;
-
-export default function BoardColumns({ cards }: { cards: BoardCard[] }) {
-  const reduce = useReducedMotion();
-  const finalPlacement = useMemo(() => Object.fromEntries(cards.map((c) => [c.key, c.column])) as Placement, [cards]);
-  const [placement, setPlacement] = useState<Placement>(finalPlacement);
-  // Moves are only animated once the cards have faded in; the rewind to the old layout is instant.
-  const [glide, setGlide] = useState(false);
-
-  // Before the first paint: if the board looked different last time, start from that layout (cards are still invisible).
-  useLayoutEffect(() => {
-    const previous = recallPlacement();
-    if (reduce || !previous) return;
-    const start: Placement = {};
-    let differs = false;
-    for (const c of cards) {
-      start[c.key] = previous[c.key] ?? c.column;
-      if (start[c.key] !== c.column) differs = true;
-    }
-    if (differs) setPlacement(start);
-    // Runs once per mount; later changes are handled by the effect below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // After the cards have faded in, move every card to its real column. Motion animates the move.
+function useLiveRefresh() {
+  const router = useRouter();
   useEffect(() => {
-    const settle = reduce ? 0 : 350 + cards.length * STAGGER * 1000 + 200;
-    const timer = setTimeout(() => {
-      setGlide(true);
-      setPlacement(finalPlacement);
-      rememberPlacement(finalPlacement);
-    }, settle);
-    return () => clearTimeout(timer);
-  }, [finalPlacement, cards.length, reduce]);
+    const tick = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    const id = setInterval(tick, REFRESH_MS);
+    return () => clearInterval(id);
+  }, [router]);
+}
 
-  const order = new Map(cards.map((c, i) => [c.key, i]));
+// The Board draws every card in its column at once, with no entrance animation. The one motion is the
+// stage glide: when a card's column changes while the Board is open, it moves there (FLIP, 300ms).
+// Under reduced motion the card moves instantly and its outline flashes amber instead.
+export default function BoardColumns({ cards }: { cards: BoardCard[] }) {
+  useLiveRefresh();
+  const reduce = useReducedMotion();
+
+  // Remember each card's last column, to know which ones just moved.
+  const lastColumn = useRef<Map<string, BoardCard["column"]>>(new Map());
+  const moved = new Set<string>();
+  for (const c of cards) {
+    const before = lastColumn.current.get(c.key);
+    if (before && before !== c.column) moved.add(c.key);
+  }
+  useEffect(() => {
+    lastColumn.current = new Map(cards.map((c) => [c.key, c.column]));
+  }, [cards]);
+  // Where every card is now. Exiting cards read this through AnimatePresence's `custom`, so a card that
+  // moved to another column vanishes at once (its new copy glides), while a card leaving the board fades out.
+  const now = new Map(cards.map((c) => [c.key, c.column]));
+
   return (
     <LayoutGroup>
       <div className="grid gap-4 md:grid-cols-5">
         {COLUMNS.map((name) => {
-          const inColumn = cards.filter((c) => placement[c.key] === name);
+          const inColumn = cards.filter((c) => c.column === name);
           return (
             <div key={name} className="min-w-0">
               <h2 className="border-b-2 border-line pb-2 font-sans text-xs font-semibold uppercase tracking-wide text-muted">
                 {name}
               </h2>
               <div className="mt-3 grid gap-3">
-                <AnimatePresence mode="popLayout">
-                {inColumn.map((card) => {
-                  const leaving = finalPlacement[card.key] === "off"; // shown here only until it glides off the board
-                  return (
+                <AnimatePresence mode="popLayout" initial={false} custom={now}>
+                  {inColumn.map((card) => (
                     <motion.div
                       key={card.key}
                       layoutId={card.key}
                       layoutCrossfade={false}
-                      // Fade in only on arrival; a card that changes columns later is already visible and just glides.
-                      initial={reduce || glide ? false : { opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      // A card leaving the board fades out where it stands; a card changing columns is
-                      // drawn in its new column at once and glides there, so its old copy vanishes instantly.
-                      exit={leaving ? { opacity: 0, scale: 0.96, transition: { duration: 0.3, ease: EASE } } : { opacity: 0, transition: { duration: 0 } }}
-                      whileHover={reduce ? undefined : { y: -2 }}
-                      transition={{
-                        layout: { duration: glide ? 0.4 : 0, ease: EASE },
-                        y: { duration: 0.35, ease: EASE, delay: (order.get(card.key) ?? 0) * STAGGER },
-                        opacity: { duration: 0.35, ease: EASE, delay: (order.get(card.key) ?? 0) * STAGGER },
+                      initial={false}
+                      animate={{ opacity: 1, scale: 1 }}
+                      custom={now}
+                      variants={{
+                        gone: (current: Map<string, BoardCard["column"]>) => {
+                          const where = current.get(card.key);
+                          return where && where !== "off"
+                            ? { opacity: 0, transition: { duration: 0 } }
+                            : { opacity: 0, scale: 0.96, transition: { duration: DUR_FAST, ease: EASE_STANDARD } };
+                        },
                       }}
-                      className={leaving ? "pointer-events-none" : undefined}
+                      exit="gone"
+                      transition={{ layout: { duration: DUR_MED, ease: EASE_STANDARD } }}
+                      className="relative"
                     >
                       <CardBody card={card} />
+                      {reduce && moved.has(card.key) && (
+                        <motion.span
+                          aria-hidden
+                          className="pointer-events-none absolute inset-0 rounded-2xl ring-2 ring-accent"
+                          initial={{ opacity: 1 }}
+                          animate={{ opacity: 0 }}
+                          transition={{ duration: DUR_MED, ease: EASE_STANDARD }}
+                        />
+                      )}
                     </motion.div>
-                  );
-                })}
+                  ))}
                 </AnimatePresence>
                 {inColumn.length === 0 && <p className="text-sm text-muted">Empty</p>}
               </div>
