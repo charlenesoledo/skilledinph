@@ -3,10 +3,13 @@ import { moduleVersions } from "@/lib/modules";
 import { jobGate } from "@/lib/rules";
 import { runState } from "@/lib/runs";
 import AgentRunButton from "@/components/AgentRunButton";
+import TargetBar from "@/components/TargetBar";
 import type { Job, KeyedItem } from "@/lib/types";
 import { approveModule, buildModule, editPassingScore, requestChanges } from "../../actions";
 
 const primary = "rounded-lg bg-primary px-4 py-2 font-semibold text-white";
+// The two decisions: big, and each on its own.
+const decide = "rounded-xl px-6 py-3 text-base font-semibold";
 const secondary = "rounded-lg border border-line px-4 py-2 font-semibold";
 const field = "mt-1 block card px-3 py-2";
 
@@ -77,13 +80,14 @@ export default async function ModulePanel({ job }: { job: Job }) {
           </div>
 
           {mod.status === "generated" && (
-            <div className="mt-5 grid gap-5 border-t border-line pt-4">
-              <form action={approveModule.bind(null, job.id)} className="flex flex-wrap items-end gap-3">
+            <div className="mt-5 grid gap-6 border-t border-line pt-4">
+              <TargetBar label="Pass mark for the final test" target={mod.passing_score} note={`The agent proposed ${mod.proposed_passing_score}. You set the final pass mark below.`} />
+              <form action={approveModule.bind(null, job.id)} className="flex flex-wrap items-end gap-4">
                 <label className="text-sm font-medium">
                   Passing score (agent proposed {mod.proposed_passing_score})
                   <input name="passing_score" id="passing_score" type="number" min={0} max={100} required defaultValue={mod.passing_score} className={`${field} w-28`} />
                 </label>
-                <button className={primary}>Approve module</button>
+                <button className={`${decide} bg-primary text-white`}>Approve module</button>
               </form>
               {regenerated ? (
                 <p className="text-sm text-muted">The agent has already regenerated this module once from your notes.</p>
@@ -93,7 +97,7 @@ export default async function ModulePanel({ job }: { job: Job }) {
                     Notes for the agent
                     <textarea name="employer_notes" id="employer_notes" required rows={2} placeholder="What should change?" className={`${field} w-full`} />
                   </label>
-                  <div><button className={secondary}>Request changes</button></div>
+                  <div><button className={`${decide} border-2 border-ink bg-card text-ink`}>Request changes</button></div>
                 </form>
               )}
             </div>

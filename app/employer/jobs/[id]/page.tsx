@@ -3,6 +3,8 @@ import { all, get } from "@/lib/db";
 import { analyzeJob, confirmRate, proposeRate } from "../../actions";
 import ModulePanel from "./ModulePanel";
 import AuditPanel from "./AuditPanel";
+import TargetBar from "@/components/TargetBar";
+import SkillBars from "@/components/SkillBars";
 import AgentRunButton from "@/components/AgentRunButton";
 import { runState } from "@/lib/runs";
 
@@ -14,6 +16,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   if (!job) notFound();
   const employer = await get("employers", job.employer_id);
   const runs = (await all("runs")).filter((r) => r.ref_type === "job" && r.ref_id === job.id);
+  const [assessments, candidates] = await Promise.all([all("assessments"), all("candidates")]);
+  const assessed = assessments
+    .filter((a) => a.job_id === job.id)
+    .map((a) => ({ name: candidates.find((c) => c.id === a.candidate_id)?.display_name ?? a.candidate_id, scores: a.score_per_skill }));
   const lastAnalyzer = runs.filter((r) => r.agent === "job_analyzer").at(-1);
   const band = job.rate_band_demo?.match(/₱(\d+)–₱(\d+)/);
   const suggested = band ? Math.round((Number(band[1]) + Number(band[2])) / 2 / 50) * 50 : undefined;
@@ -49,22 +55,25 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <h2 className="text-lg font-bold">Skill breakdown</h2>
           {job.target_skills.length > 0 ? (
             <>
-              <table className="mt-3 w-full text-sm">
-                <thead>
-                  <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-muted">
-                    <th className="py-2 pr-3">Skill</th><th className="py-2 pr-3">Target</th><th className="py-2">Why</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {job.target_skills.map((s) => (
-                    <tr key={s.skill} className="border-b border-line align-top">
-                      <td className="py-2 pr-3 font-semibold">{s.skill}</td>
-                      <td className="py-2 pr-3 tabular-nums">{s.target}</td>
-                      <td className="py-2 text-muted">{s.why}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <p className="mt-1 text-sm text-muted">Your scorecard: each skill against the target you set.</p>
+              <div className="mt-4 grid gap-4">
+                {job.target_skills.map((s) => (
+                  <TargetBar key={s.skill} label={s.skill} target={s.target} note={s.why} />
+                ))}
+              </div>
+              {assessed.length > 0 && (
+                <div className="mt-6 border-t border-line pt-4">
+                  <h3 className="text-sm font-semibold">Candidate results against your targets</h3>
+                  <div className="mt-2 grid gap-4">
+                    {assessed.map(({ name, scores }) => (
+                      <div key={name}>
+                        <p className="text-sm font-medium">{name}</p>
+                        <SkillBars skills={job.target_skills.map((s) => ({ label: s.skill.split(" ")[0], score: scores[s.skill] ?? 0, target: s.target }))} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <h3 className="mt-4 text-sm font-semibold">Draft quality rubric</h3>
               <ul className="mt-1 list-disc pl-5 text-sm text-muted">
                 {job.rubric.map((r) => <li key={r}>{r}</li>)}

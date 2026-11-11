@@ -23,6 +23,15 @@ export type BoardCard = {
   person?: CandidateCardData; // set on candidate cards
 };
 
+// What an empty column says: one headline and one sentence.
+const EMPTY: Record<Column, { headline: string; sentence: string }> = {
+  "Job Secured": { headline: "No jobs yet", sentence: "A job appears here once an employer submits a Human Job Card." },
+  Assessing: { headline: "No one being assessed", sentence: "Candidates appear here when a job is open and they are waiting for, or just finished, their assessment." },
+  Training: { headline: "No one in Training yet", sentence: "Candidates appear here after assessment, once the employer approves the module." },
+  "Awaiting Employer Approval": { headline: "Nothing waiting on the employer", sentence: "New modules and trainable candidates wait here until the employer approves." },
+  Offered: { headline: "No offers yet", sentence: "A candidate appears here the moment they qualify and the offer is made." },
+};
+
 // How often the open Board re-reads the data, so stage changes made elsewhere (another tab,
 // the presenter's phone, Run full demo) appear here and glide into place.
 const REFRESH_MS = 3000;
@@ -108,7 +117,12 @@ export default function BoardColumns({ cards }: { cards: BoardCard[] }) {
                     </motion.div>
                   ))}
                 </AnimatePresence>
-                {inColumn.length === 0 && <p className="text-sm text-muted">Empty</p>}
+                {inColumn.length === 0 && (
+                  <div className="rounded-2xl border border-dashed border-line p-4">
+                    <p className="text-sm font-semibold text-ink">{EMPTY[name].headline}</p>
+                    <p className="mt-1 text-xs text-muted">{EMPTY[name].sentence}</p>
+                  </div>
+                )}
               </div>
             </div>
           );
