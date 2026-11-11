@@ -7,20 +7,28 @@ const COLUMNS = ["Job Secured", "Assessing", "Training", "Awaiting Employer Appr
 type Card = { key: string; title: string; sub: string; step: string; href: string };
 
 export default async function Page() {
-  const [jobs, employers, candidates] = await Promise.all([all("jobs"), all("employers"), all("candidates")]);
+  const [jobs, employers, candidates, assessments] = await Promise.all([
+    all("jobs"), all("employers"), all("candidates"), all("assessments"),
+  ]);
   const cols: Record<(typeof COLUMNS)[number], Card[]> = {
     "Job Secured": [], Assessing: [], Training: [], "Awaiting Employer Approval": [], Offered: [],
   };
+  const foundational: string[] = [];
   for (const j of jobs) {
     cols["Job Secured"].push({
       key: j.id, title: j.title, sub: employers.find((e) => e.id === j.employer_id)?.name ?? "",
-      step: `Status: ${j.status} · ${j.pay_status === "confirmed" ? `₱${j.pay_confirmed}/day` : "pay not confirmed"} · Seats ${j.seats_taken}/${j.reserved_slots}`, href: `/employer/jobs/${j.id}`,
+      step: `Status: ${j.status} · ${j.pay_status === "confirmed" ? `₱${j.pay_confirmed}/day` : "pay not confirmed"} · Seats ${j.seats_taken}/${j.reserved_slots}`,
+      href: `/employer/jobs/${j.id}`,
     });
   }
   for (const c of candidates) {
-    cols.Assessing.push({
-      key: c.id, title: c.display_name, sub: c.location_label, step: "Not assessed yet", href: `/candidate/${c.id}`,
-    });
+    const a = assessments.find((x) => x.candidate_id === c.id);
+    const card = (step: string): Card => ({ key: c.id, title: c.display_name, sub: c.location_label, step, href: `/candidate/${c.id}` });
+    if (!a) cols.Assessing.push(card("Not assessed yet"));
+    else if (a.sorting === "ready") cols.Assessing.push(card("READY · no gap · offer is the next step"));
+    else if (a.sorting === "trainable")
+      cols["Awaiting Employer Approval"].push(card(`TRAINABLE · gap ~${a.total_gap_hours} hours · waiting for an approved module`));
+    else foundational.push(c.display_name);
   }
   const empty = jobs.length === 0 && candidates.length === 0;
 
@@ -49,6 +57,11 @@ export default async function Page() {
           </div>
         ))}
       </div>
+      {foundational.length > 0 && (
+        <p className="mt-6 text-sm text-stone-600">
+          Routed to the foundational track for now: {foundational.join(", ")}. No offer on this job yet, and the door stays open.
+        </p>
+      )}
     </section>
   );
 }

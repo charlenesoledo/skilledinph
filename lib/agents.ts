@@ -3,12 +3,14 @@
 // sample output is used and the run is marked mock.
 import { insert } from "./db";
 import { llmMode } from "./mode";
-import type { TargetSkill } from "./types";
+import type { KeyedItem, TargetSkill } from "./types";
+import { SAMPLE_ASSESSMENT_ITEMS } from "./assessment-items";
 import { lookupBand } from "./rate-table";
 
 export type AgentOutputs = {
   job_analyzer: { skills: TargetSkill[]; rubric: string[] };
   rate_research: { band_low: number; band_high: number; basis: string };
+  assessor: { items: KeyedItem[] };
 };
 export type AgentName = keyof AgentOutputs;
 
@@ -20,6 +22,11 @@ const SYSTEM: Record<AgentName, string> = {
   rate_research:
     "You propose a pay band for a job type from the provided reference table only. Output JSON only: " +
     "{band_low, band_high, basis: 'reference table (demo data)'}. Never present the band as a verified live market rate.",
+  assessor:
+    "You create short task-based assessment items for a job's skills. Each item is a tiny real task (spot the error, " +
+    "choose the reply, fix the detail) with ONE keyed correct answer. Output JSON only: " +
+    "{items: [{skill, prompt, choices, correct_index}]}. 6 items, covering every target skill at least once. " +
+    "Plain language, phone-readable.",
 };
 
 const MOCK: { [K in AgentName]: (input: unknown) => AgentOutputs[K] } = {
@@ -40,7 +47,12 @@ const MOCK: { [K in AgentName]: (input: unknown) => AgentOutputs[K] } = {
     const row = lookupBand(String((input as { job_type?: string })?.job_type ?? ""));
     return { band_low: row.low, band_high: row.high, basis: "reference table (demo data)" };
   },
+  assessor: () => ({ items: SAMPLE_ASSESSMENT_ITEMS }),
 };
+
+const validItem = (i: KeyedItem) =>
+  typeof i?.skill === "string" && typeof i.prompt === "string" && Array.isArray(i.choices) && i.choices.length >= 2 &&
+  Number.isInteger(i.correct_index) && i.correct_index >= 0 && i.correct_index < i.choices.length;
 
 const VALID: { [K in AgentName]: (o: unknown) => boolean } = {
   job_analyzer: (o) => {
@@ -54,6 +66,10 @@ const VALID: { [K in AgentName]: (o: unknown) => boolean } = {
   rate_research: (o) => {
     const x = o as AgentOutputs["rate_research"];
     return typeof x?.band_low === "number" && typeof x.band_high === "number" && x.band_low > 0 && x.band_low < x.band_high;
+  },
+  assessor: (o) => {
+    const x = o as AgentOutputs["assessor"];
+    return Array.isArray(x?.items) && x.items.length === 6 && x.items.every(validItem);
   },
 };
 
