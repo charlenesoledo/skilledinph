@@ -38,3 +38,9 @@ import type { Module } from "./types";
 export function moduleOpen(module: Module | undefined): module is Module {
   return module?.status === "employer_approved";
 }
+
+// HR3: the final test unlocks only when every assigned section is complete.
+import type { CandidatePlan } from "./types";
+export function testUnlocked(plan: CandidatePlan): boolean {
+  return plan.assigned_sections.length > 0 && plan.assigned_sections.every((id) => plan.progress[id] === true);
+}

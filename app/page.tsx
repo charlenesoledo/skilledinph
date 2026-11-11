@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { all } from "@/lib/db";
 import { currentModule } from "@/lib/modules";
-import { moduleOpen } from "@/lib/rules";
+import { moduleOpen, testUnlocked } from "@/lib/rules";
 import type { Module } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +13,7 @@ export default async function Page() {
   const [jobs, employers, candidates, assessments] = await Promise.all([
     all("jobs"), all("employers"), all("candidates"), all("assessments"),
   ]);
+  const plans = await all("candidate_plans");
   const current = new Map<string, Module | undefined>();
   for (const j of jobs) current.set(j.id, await currentModule(j.id));
   const cols: Record<(typeof COLUMNS)[number], Card[]> = {
@@ -38,7 +39,10 @@ export default async function Page() {
     if (!a) cols.Assessing.push(card("Not assessed yet"));
     else if (a.sorting === "ready") cols.Assessing.push(card("READY · no gap · offer is the next step"));
     else if (a.sorting === "trainable") {
-      if (moduleOpen(current.get(a.job_id))) cols.Training.push(card(`TRAINABLE · module ~${a.total_gap_hours} hours · module open`));
+      const plan = plans.find((p) => p.candidate_id === c.id);
+      const doneCount = plan ? plan.assigned_sections.filter((s) => plan.progress[s]).length : 0;
+      if (plan) cols.Training.push(card(testUnlocked(plan) ? `Sections complete · final test unlocked` : `Training · ${doneCount}/${plan.assigned_sections.length} sections · ~${plan.personal_hours} hours`));
+      else if (moduleOpen(current.get(a.job_id))) cols.Training.push(card(`TRAINABLE · module ~${a.total_gap_hours} hours · module open, not started`));
       else cols["Awaiting Employer Approval"].push(card(`TRAINABLE · gap ~${a.total_gap_hours} hours · waiting for an approved module`));
     }
     else foundational.push(c.display_name);
