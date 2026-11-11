@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SkillBars from "@/components/SkillBars";
+import PendingButton, { RUNNING_STYLE } from "@/components/PendingButton";
 import { all } from "@/lib/db";
 import { jobGate } from "@/lib/rules";
 import { runAllAssessments, runAssessment } from "./actions";
@@ -37,7 +38,7 @@ export default async function Page() {
                     <span className={g.open ? "text-primary" : "font-medium text-ink"}>{g.reason}</span>
                   </span>
                   <form action={runAllAssessments.bind(null, j.id)}>
-                    <button disabled={!g.open} className={btn}>Run all assessments</button>
+                    <PendingButton disabled={!g.open} className={btn} label="Run all assessments" pendingLabel="Running…" pendingClassName={RUNNING_STYLE} />
                   </form>
                 </li>
               );
@@ -86,7 +87,7 @@ export default async function Page() {
                       return (
                         <td key={j.id} className="py-2 pr-4">
                           <AgentRunButton action={runAssessment.bind(null, j.id, c.id)} label="Run assessment" retryLabel="Retry assessment"
-                            state={runState(runs, "assessor", c.id)} disabled={!open} variant="secondary" />
+                            state={runState(runs, "assessor", c.id)} disabled={!open} variant="secondary" pendingLabel="Running…" />
                           {!open && <div className="mt-1 text-xs text-ink">Assessment locked (HR1)</div>}
                         </td>
                       );
