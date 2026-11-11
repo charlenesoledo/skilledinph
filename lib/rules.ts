@@ -44,3 +44,15 @@ import type { CandidatePlan } from "./types";
 export function testUnlocked(plan: CandidatePlan): boolean {
   return plan.assigned_sections.length > 0 && plan.assigned_sections.every((id) => plan.progress[id] === true);
 }
+
+// HR4: final-test scoring is deterministic, against the employer-approved answer key stored with the module.
+import type { KeyedItem, ScoredItem } from "./types";
+export function scoreTest(items: KeyedItem[], answers: number[]): { score: number; items: ScoredItem[] } {
+  const scored = items.map((it, i) => ({
+    prompt: it.prompt, skill: it.skill, answer: it.choices[answers[i]] ?? "(no answer)",
+    key: it.choices[it.correct_index], correct: answers[i] === it.correct_index,
+  }));
+  const right = scored.filter((s) => s.correct).length;
+  return { score: items.length ? Math.round((right / items.length) * 100) : 0, items: scored };
+}
+export const MAX_TEST_ATTEMPTS = 2; // the first try plus one retake

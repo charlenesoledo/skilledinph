@@ -1,5 +1,5 @@
 // Spec Section 9 sample data. Everything here is fictional.
-import { clearAll, insert } from "./db";
+import { clearAll, get, insert } from "./db";
 import type { Candidate, Employer, Job } from "./types";
 
 export const SAMPLE_EMPLOYER_ID = "emp_tidynest";
@@ -10,6 +10,8 @@ export const SAMPLE_SCORES: Record<string, Record<string, number>> = {
   cand_maria: { "Price & Detail Accuracy": 90, "Taglish Tone Judgment": 85, "Reading Comprehension": 90 },
   cand_jomar: { "Price & Detail Accuracy": 55, "Taglish Tone Judgment": 50, "Reading Comprehension": 80 },
   cand_rhea: { "Price & Detail Accuracy": 20, "Taglish Tone Judgment": 25, "Reading Comprehension": 40 },
+  // Optional 4th candidate, used only to prove the seat cap (HR5).
+  cand_paolo: { "Price & Detail Accuracy": 85, "Taglish Tone Judgment": 80, "Reading Comprehension": 75 },
 };
 
 export async function loadSampleData() {
@@ -49,4 +51,13 @@ export async function loadSampleData() {
     };
     await insert("candidates", c);
   }
+}
+
+// Spec Section 9: a 4th fictional candidate may be added to prove HR5 (seats full -> waitlist, NOT GUARANTEED).
+export async function addFourthCandidate() {
+  if (await get("candidates", "cand_paolo")) return;
+  await insert("candidates", {
+    id: "cand_paolo", display_name: "Paolo", phone_label: "Android phone (fictional)", location_label: "Davao Region",
+    foundational_level: "Basic literacy, Taglish fluent", created_at: new Date().toISOString(),
+  });
 }

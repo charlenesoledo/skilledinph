@@ -45,9 +45,10 @@ export type CandidatePlan = {
   status: "not_started" | "in_progress" | "sections_complete" | "test_unlocked" | "passed" | "failed_once";
 };
 
+export type ScoredItem = { prompt: string; skill: string; answer: string; key: string; correct: boolean };
 export type TestResult = {
   id: string; candidate_plan_id: string; answers: number[]; score: number; passed: boolean;
-  scored_output: { prompt: string; skill: string; answer: string; key: string; correct: boolean }[];
+  scored_output: { items: ScoredItem[]; explanation: string | null };
   created_at: string;
 };
 

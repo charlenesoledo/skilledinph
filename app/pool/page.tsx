@@ -10,7 +10,9 @@ const SORT_STYLE = { ready: "bg-emerald-100 text-emerald-900", trainable: "bg-am
 const btn = "rounded-lg border border-stone-300 px-3 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40";
 
 export default async function Page() {
-  const [candidates, jobs, assessments, runs] = await Promise.all([all("candidates"), all("jobs"), all("assessments"), all("runs")]);
+  const [candidates, jobs, assessments, runs, offers] = await Promise.all([
+    all("candidates"), all("jobs"), all("assessments"), all("runs"), all("offers"),
+  ]);
   return (
     <section>
       <h1 className="text-2xl font-bold">Candidate Pool</h1>
@@ -65,6 +67,15 @@ export default async function Page() {
                             <span className="ml-2 tabular-nums text-stone-600">
                               {a.total_gap_hours === 0 ? "no gap" : `gap ~${a.total_gap_hours} hours`}
                             </span>
+                            {(() => {
+                              const o = offers.find((x) => x.job_id === j.id && x.candidate_id === c.id);
+                              if (!o) return null;
+                              return (
+                                <span className={`ml-2 rounded px-2 py-1 text-xs font-semibold ${o.guaranteed ? "bg-amber-300 text-amber-950" : "bg-stone-200 text-stone-700"}`}>
+                                  {o.guaranteed ? `GUARANTEED · ${o.status}` : "WAITLIST · NOT GUARANTEED"}
+                                </span>
+                              );
+                            })()}
                             <div className="mt-1 text-xs text-stone-500">
                               {j.target_skills.map((s) => `${s.skill.split(" ")[0]} ${a.score_per_skill[s.skill] ?? 0}/${s.target}`).join(" · ")}
                             </div>

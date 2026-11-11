@@ -5,6 +5,7 @@ import { all, get, insert, update } from "@/lib/db";
 import { runAgent } from "@/lib/agents";
 import { gapHours, jobGate, sortByGap } from "@/lib/rules";
 import { SAMPLE_SCORES } from "@/lib/sample-data";
+import { offerWithoutTraining } from "@/lib/matcher";
 
 async function assessOne(jobId: string, candidateId: string) {
   const [job, candidate] = await Promise.all([get("jobs", jobId), get("candidates", candidateId)]);
@@ -25,6 +26,9 @@ async function assessOne(jobId: string, candidateId: string) {
     id: `asm_${crypto.randomUUID().slice(0, 8)}`, job_id: jobId, candidate_id: candidateId, items: res.output.items,
     score_per_skill: scores, total_gap_hours: total, sorting: sortByGap(total), created_at: now,
   });
+
+  // READY skips training and goes straight to the offer (spec Section 6, step 5).
+  if (sortByGap(total) === "ready") await offerWithoutTraining(jobId, candidateId);
 
   const profiles = await all("skill_profiles");
   for (const [skill, level] of Object.entries(scores)) {

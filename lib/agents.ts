@@ -13,6 +13,7 @@ export type AgentOutputs = {
   rate_research: { band_low: number; band_high: number; basis: string };
   assessor: { items: KeyedItem[] };
   module_builder: typeof SAMPLE_MODULE;
+  qa_explainer: { message: string };
 };
 export type AgentName = keyof AgentOutputs;
 
@@ -36,6 +37,10 @@ const SYSTEM: Record<AgentName, string> = {
     "{sections: [{skill, title, lesson_text, worked_example, practice_items: [{skill, prompt, choices, correct_index}]}], " +
     "final_test: {items: [{skill, prompt, choices, correct_index}], rubric: [checklist items]}, proposed_passing_score}. " +
     "Never teach anything the employer's examples contradict.",
+  qa_explainer:
+    "You explain a scored test result to a candidate in kind, plain Taglish: what they got right, the one skill to " +
+    "practice, and what happens next. Never change the score. Never use the words 'rejected' or 'failed as a person'. " +
+    "Output JSON only: {message}.",
 };
 
 const MOCK: { [K in AgentName]: (input: unknown) => AgentOutputs[K] } = {
@@ -58,6 +63,15 @@ const MOCK: { [K in AgentName]: (input: unknown) => AgentOutputs[K] } = {
   },
   assessor: () => ({ items: SAMPLE_ASSESSMENT_ITEMS }),
   module_builder: () => SAMPLE_MODULE,
+  qa_explainer: (input) => {
+    const r = input as { score: number; passing_score: number; passed: boolean; correct_count: number; total: number; missed_skills: string[]; retake_left: boolean };
+    const head = `Nakuha mo ang ${r.score}. Tama ang ${r.correct_count} sa ${r.total} na tanong`;
+    if (r.passed) return { message: `${head}, at pasado ito sa itinakda ng employer na ${r.passing_score}. Ang galing! Susunod: ang job offer mo.` };
+    const next = r.retake_left
+      ? "May isa ka pang retake pagkatapos mong balikan ang mga ito."
+      : "Naka-save ang progress mo, at ituturo ka namin sa susunod na bagay na job para sa'yo.";
+    return { message: `${head}; ${r.passing_score} ang kailangan ng employer. Kaunti na lang! Mag-practice muna tayo sa: ${r.missed_skills.join(", ")}. ${next}` };
+  },
 };
 
 const validItem = (i: KeyedItem) =>
@@ -80,6 +94,10 @@ const VALID: { [K in AgentName]: (o: unknown) => boolean } = {
   assessor: (o) => {
     const x = o as AgentOutputs["assessor"];
     return Array.isArray(x?.items) && x.items.length === 6 && x.items.every(validItem);
+  },
+  qa_explainer: (o) => {
+    const m = (o as AgentOutputs["qa_explainer"])?.message;
+    return typeof m === "string" && m.trim().length > 0 && !/rejected|failed as a person/i.test(m);
   },
   module_builder: (o) => {
     const x = o as AgentOutputs["module_builder"];

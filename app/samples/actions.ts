@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { clearAll } from "@/lib/db";
-import { loadSampleData } from "@/lib/sample-data";
+import { addFourthCandidate, loadSampleData } from "@/lib/sample-data";
 
 export async function loadSamples() {
   await loadSampleData();
@@ -11,5 +11,10 @@ export async function loadSamples() {
 
 export async function resetSamples() {
   await clearAll();
+  revalidatePath("/", "layout");
+}
+
+export async function addFourth() {
+  await addFourthCandidate();
   revalidatePath("/", "layout");
 }

@@ -14,6 +14,7 @@ export default async function Page() {
     all("jobs"), all("employers"), all("candidates"), all("assessments"),
   ]);
   const plans = await all("candidate_plans");
+  const offers = await all("offers");
   const current = new Map<string, Module | undefined>();
   for (const j of jobs) current.set(j.id, await currentModule(j.id));
   const cols: Record<(typeof COLUMNS)[number], Card[]> = {
@@ -36,7 +37,9 @@ export default async function Page() {
   for (const c of candidates) {
     const a = assessments.find((x) => x.candidate_id === c.id);
     const card = (step: string): Card => ({ key: c.id, title: c.display_name, sub: c.location_label, step, href: `/candidate/${c.id}` });
-    if (!a) cols.Assessing.push(card("Not assessed yet"));
+    const o = offers.find((x) => x.candidate_id === c.id);
+    if (o) cols.Offered.push(card(o.guaranteed ? `GUARANTEED · ${o.status} · ₱${o.pay_confirmed}/day` : "WAITLIST · NOT GUARANTEED"));
+    else if (!a) cols.Assessing.push(card("Not assessed yet"));
     else if (a.sorting === "ready") cols.Assessing.push(card("READY · no gap · offer is the next step"));
     else if (a.sorting === "trainable") {
       const plan = plans.find((p) => p.candidate_id === c.id);
