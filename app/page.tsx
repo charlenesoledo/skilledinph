@@ -14,7 +14,7 @@ export default async function Page() {
   for (const j of jobs) {
     cols["Job Secured"].push({
       key: j.id, title: j.title, sub: employers.find((e) => e.id === j.employer_id)?.name ?? "",
-      step: `Status: ${j.status} · Seats ${j.seats_taken}/${j.reserved_slots}`, href: `/employer/jobs/${j.id}`,
+      step: `Status: ${j.status} · ${j.pay_status === "confirmed" ? `₱${j.pay_confirmed}/day` : "pay not confirmed"} · Seats ${j.seats_taken}/${j.reserved_slots}`, href: `/employer/jobs/${j.id}`,
     });
   }
   for (const c of candidates) {

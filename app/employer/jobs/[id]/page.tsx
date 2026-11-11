@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { all, get } from "@/lib/db";
-import { analyzeJob } from "../../actions";
+import { analyzeJob, confirmRate, proposeRate } from "../../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +11,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const employer = await get("employers", job.employer_id);
   const runs = (await all("runs")).filter((r) => r.ref_type === "job" && r.ref_id === job.id);
   const lastAnalyzer = runs.filter((r) => r.agent === "job_analyzer").at(-1);
+  const lastRate = runs.filter((r) => r.agent === "rate_research").at(-1);
+  const band = job.rate_band_demo?.match(/₱(\d+)–₱(\d+)/);
+  const suggested = band ? Math.round((Number(band[1]) + Number(band[2])) / 2 / 50) * 50 : undefined;
 
   const card: [string, string][] = [
     ["Employer", employer?.name ?? ""], ["Workflow step", job.workflow_step], ["Why a human", job.why_human],
@@ -76,6 +79,47 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                   {lastAnalyzer && !lastAnalyzer.ok ? "Retry Job Analyzer" : "Run Job Analyzer"}
                 </button>
               </form>
+            </>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-stone-200 bg-white p-5">
+          <h2 className="text-lg font-bold">Pay rate</h2>
+          {job.target_skills.length === 0 ? (
+            <p className="mt-2 text-sm text-stone-600">Run the Job Analyzer first. Rate Research uses the analyzed job.</p>
+          ) : !job.rate_band_demo ? (
+            <>
+              <p className="mt-2 text-sm text-stone-600">Rate Research proposes a pay band for this job type from the built-in reference table.</p>
+              {lastRate && !lastRate.ok && <p className="mt-2 text-sm text-red-700">Last run failed: {lastRate.error}</p>}
+              <form action={proposeRate.bind(null, job.id)} className="mt-3">
+                <button className="rounded-lg bg-emerald-800 px-4 py-2 font-semibold text-white">
+                  {lastRate && !lastRate.ok ? "Retry Rate Research" : "Run Rate Research"}
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <p className="mt-2 text-sm text-stone-500">Proposed band</p>
+              <p className="font-mono">{job.rate_band_demo}</p>
+              {job.pay_status === "confirmed" ? (
+                <p className="mt-3 text-sm">
+                  Confirmed at <b>₱{job.pay_confirmed}/day</b>. Candidates see this rate before they start training.
+                </p>
+              ) : (
+                <>
+                  <form action={confirmRate.bind(null, job.id)} className="mt-3 flex flex-wrap items-end gap-3">
+                    <label className="text-sm font-medium">
+                      Final rate (₱/day)
+                      <input name="pay" id="pay" type="number" min={1} required defaultValue={suggested}
+                        className="mt-1 block w-32 rounded-lg border border-stone-300 bg-white px-3 py-2" />
+                    </label>
+                    <button className="rounded-lg bg-emerald-800 px-4 py-2 font-semibold text-white">Confirm rate</button>
+                  </form>
+                  <p className="mt-2 text-xs text-amber-800">
+                    HR1: this job stays a draft, with assessments and the module locked, until you confirm the rate.
+                  </p>
+                </>
+              )}
             </>
           )}
         </div>

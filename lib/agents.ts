@@ -4,9 +4,11 @@
 import { insert } from "./db";
 import { llmMode } from "./mode";
 import type { TargetSkill } from "./types";
+import { lookupBand } from "./rate-table";
 
 export type AgentOutputs = {
   job_analyzer: { skills: TargetSkill[]; rubric: string[] };
+  rate_research: { band_low: number; band_high: number; basis: string };
 };
 export type AgentName = keyof AgentOutputs;
 
@@ -15,6 +17,9 @@ const SYSTEM: Record<AgentName, string> = {
     "You break a human-job into skills. Given the job's tasks, why-human note, and good/bad examples, output JSON only: " +
     "{skills: [{skill, target (0-100), why}], rubric: [checklist items]}. Use 3–5 skills. Targets must be justified by " +
     "the examples: a skill the bad example fails must have a target of 70 or higher.",
+  rate_research:
+    "You propose a pay band for a job type from the provided reference table only. Output JSON only: " +
+    "{band_low, band_high, basis: 'reference table (demo data)'}. Never present the band as a verified live market rate.",
 };
 
 const MOCK: { [K in AgentName]: (input: unknown) => AgentOutputs[K] } = {
@@ -31,6 +36,10 @@ const MOCK: { [K in AgentName]: (input: unknown) => AgentOutputs[K] } = {
       "Reply answers every question the customer asked",
     ],
   }),
+  rate_research: (input) => {
+    const row = lookupBand(String((input as { job_type?: string })?.job_type ?? ""));
+    return { band_low: row.low, band_high: row.high, basis: "reference table (demo data)" };
+  },
 };
 
 const VALID: { [K in AgentName]: (o: unknown) => boolean } = {
@@ -41,6 +50,10 @@ const VALID: { [K in AgentName]: (o: unknown) => boolean } = {
       x.skills.every((s) => typeof s.skill === "string" && typeof s.target === "number" && s.target >= 0 && s.target <= 100) &&
       Array.isArray(x.rubric) && x.rubric.every((r) => typeof r === "string")
     );
+  },
+  rate_research: (o) => {
+    const x = o as AgentOutputs["rate_research"];
+    return typeof x?.band_low === "number" && typeof x.band_high === "number" && x.band_low > 0 && x.band_low < x.band_high;
   },
 };
 
