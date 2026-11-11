@@ -20,7 +20,7 @@ export default async function Page() {
         <div className="mt-5 flex flex-wrap gap-3">
           <form action={loadSamples}><PendingButton label="Load sample data" pendingLabel="Loading…" className={primary} /></form>
           <form action={resetSamples}><PendingButton label="Reset all data" pendingLabel="Resetting…" className={secondary} /></form>
-          <form action={runFullDemo}><PendingButton label="Run full demo" pendingLabel="Running the full loop… (about 30 seconds)" className={primary} /></form>
+          <form action={runFullDemo}><PendingButton label="Run full demo" pendingLabel="Running the full loop… (up to a minute)" className={primary} /></form>
         </div>
         <p className="mt-3 text-sm text-stone-600">
           Run full demo reloads the sample data and steps the job through the whole loop: analyze, rate, assess, build and approve
