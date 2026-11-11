@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { all, clearAll, dbStats, get, getFailNext, setFailNext, storageLabel } from "@/lib/db";
 import { SAMPLE_JOB_ID, addFourthCandidate, loadSampleData } from "@/lib/sample-data";
 import { currentModule } from "@/lib/modules";
@@ -71,5 +70,5 @@ export async function runFullDemo() {
   await rateCandidate(J, "cand_jomar", form("stars", "5"));
   console.log(`Full demo: ${dbStats.calls - callsBefore} database calls in ${((Date.now() - started) / 1000).toFixed(1)}s (${storageLabel})`);
   revalidatePath("/", "layout");
-  redirect("/");
+  // The Demo Data page opens the Board itself once its agent-run stepper has finished.
 }

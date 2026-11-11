@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { all, counts, getFailNext, storageLabel } from "@/lib/db";
 import PendingButton from "@/components/PendingButton";
+import FullDemoRunner from "@/components/FullDemoRunner";
+import { SAMPLE_JOB_ID } from "@/lib/sample-data";
 import { addFourth, loadSamples, resetSamples, runFullDemo, toggleFailNext } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -13,14 +15,17 @@ export default async function Page() {
   return (
     <section className="grid gap-8">
       <div className="max-w-2xl">
-        <h1 className="text-2xl font-bold">Demo Data</h1>
+        <h1 className="text-3xl font-bold">Demo Data</h1>
         <p className="mt-2 text-muted">
           Loads the fictional sample set: TidyNest Online, the Listing &amp; Reply Checker job, and candidates Maria, Jomar and Rhea.
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
           <form action={loadSamples}><PendingButton label="Load sample data" pendingLabel="Loading…" className={primary} /></form>
           <form action={resetSamples}><PendingButton label="Reset all data" pendingLabel="Resetting…" className={secondary} /></form>
-          <form action={runFullDemo}><PendingButton label="Run full demo" pendingLabel="Running the full loop…" className={primary} /></form>
+        </div>
+        <div className="mt-5">
+          <FullDemoRunner action={runFullDemo} className={primary}
+            startPlacement={{ [SAMPLE_JOB_ID]: "Job Secured", cand_maria: "Assessing", cand_jomar: "Assessing", cand_rhea: "Assessing" }} />
         </div>
         <p className="mt-3 text-sm text-muted">
           Run full demo reloads the sample data and steps the job through the whole loop: analyze, rate, assess, build and approve

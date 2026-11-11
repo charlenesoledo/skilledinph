@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SkillBars from "@/components/SkillBars";
 import { all } from "@/lib/db";
 import { jobGate } from "@/lib/rules";
 import { runAllAssessments, runAssessment } from "./actions";
@@ -8,7 +9,7 @@ import AgentRunButton from "@/components/AgentRunButton";
 export const dynamic = "force-dynamic";
 
 const SORT_LABEL = { ready: "READY", trainable: "TRAINABLE", not_yet: "NOT YET" } as const;
-const SORT_STYLE = { ready: "bg-primary/10 text-primary", trainable: "bg-accent/30 text-ink", not_yet: "bg-primary/10 text-primary" } as const;
+const SORT_STYLE = { ready: "bg-primary/10 text-primary", trainable: "bg-accent/30 text-ink", not_yet: "bg-line text-ink" } as const;
 const btn = "rounded-lg border border-line px-3 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40";
 
 export default async function Page() {
@@ -77,9 +78,9 @@ export default async function Page() {
                                 </span>
                               );
                             })()}
-                            <div className="mt-1 text-xs text-muted">
-                              {j.target_skills.map((s) => `${s.skill.split(" ")[0]} ${a.score_per_skill[s.skill] ?? 0}/${s.target}`).join(" · ")}
-                            </div>
+                            <SkillBars
+                              skills={j.target_skills.map((s) => ({ label: s.skill.split(" ")[0], score: a.score_per_skill[s.skill] ?? 0, target: s.target }))}
+                            />
                           </td>
                         );
                       return (

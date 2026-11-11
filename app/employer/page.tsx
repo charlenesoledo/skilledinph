@@ -62,7 +62,7 @@ export default async function Page() {
         <ul className="mt-3 grid gap-2">
           {jobs.map((j) => (
             <li key={j.id}>
-              <Link href={`/employer/jobs/${j.id}`} className="block card p-3 hover:border-muted">
+              <Link href={`/employer/jobs/${j.id}`} className="card card-hover block p-4 hover:border-muted">
                 <div className="font-semibold">{j.title}</div>
                 <div className="mt-1 text-xs text-muted">
                   Status: {j.status} · {j.reserved_slots} reserved slots · {j.target_skills.length ? `${j.target_skills.length} skills` : "skills not analyzed"}

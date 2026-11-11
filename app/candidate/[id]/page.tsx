@@ -5,6 +5,7 @@ import { MAX_TEST_ATTEMPTS, gapHours, jobGate, moduleOpen, testUnlocked } from "
 import { currentModule } from "@/lib/modules";
 import type { Module } from "@/lib/types";
 import Practice from "@/components/Practice";
+import OfferTicket from "@/components/OfferTicket";
 import { acceptOffer, completeSection, startPlan, submitTest } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -131,16 +132,8 @@ export default async function Page({
 
             {offer && (
               <>
-                <div className="grid gap-2 rounded-2xl border-2 border-dashed border-ink p-5">
-                  <span className={`w-fit -rotate-2 rounded px-3 py-2 font-mono text-sm font-semibold tracking-widest ${offer.guaranteed ? "bg-accent text-ink" : "bg-line text-muted"}`}>
-                    {offer.guaranteed ? "GUARANTEED" : "NOT GUARANTEED · WAITLIST"}
-                  </span>
-                  <p className="text-sm text-muted">{offer.guaranteed ? "Job offer" : "Waitlist"} mula sa {employer?.name}</p>
-                  <p className="text-xl font-bold">{job.title}</p>
-                  <p className="big-number text-[48px]">₱{offer.pay_confirmed}<span className="ml-1 font-sans text-base font-normal text-muted">/ araw</span></p>
-                  <p className="text-base">Simula: {job.deadline}</p>
-                  {offer.guaranteed && <p className="text-base text-muted">Walang application. Walang interview.</p>}
-                </div>
+                <OfferTicket guaranteed={offer.guaranteed} employerName={employer?.name ?? ""} title={job.title}
+                  pay={offer.pay_confirmed} start={job.deadline} seatsTaken={job.seats_taken} slots={job.reserved_slots} />
                 {last?.passed && (
                   <p className="text-base">
                     {last.scored_output.explanation ?? `Nakuha mo ang ${last.score} sa final test. Pasado: ${planModule?.passing_score}.`}
@@ -226,7 +219,7 @@ export default async function Page({
                   <>
                     <div className="grid gap-3">
                       {sections.map((s) => (
-                        <Link key={s.id} href={`${home}?plan=${plan.id}&section=${s.id}`} className="rounded-xl border border-line p-4 hover:border-muted">
+                        <Link key={s.id} href={`${home}?plan=${plan.id}&section=${s.id}`} className="card card-hover block p-4 hover:border-muted">
                           <div className="font-semibold">{s.title}</div>
                           <div className="mt-1 text-base text-muted">
                             {gap.per[s.skill] ? `${gap.per[s.skill]} hours · ` : "Practice · "}
