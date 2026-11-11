@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { useReducedMotion } from "motion/react";
 
 // Ease-out curve shared by the count-ups (cubic).
@@ -11,11 +11,14 @@ const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 export function useCountUp(to: number, ms: number, delay = 0, from = 0): number {
   const reduce = useReducedMotion();
   const [value, setValue] = useState(ms > 0 && !reduce ? from : to);
-  useEffect(() => {
+  // Layout effect: when a count starts, the starting number is set before the browser paints,
+  // so the final number never flashes first.
+  useLayoutEffect(() => {
     if (reduce || ms <= 0) {
       setValue(to);
       return;
     }
+    setValue(from);
     let frame = 0;
     let start: number | null = null;
     const timer = setTimeout(() => {

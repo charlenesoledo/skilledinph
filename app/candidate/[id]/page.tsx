@@ -5,7 +5,7 @@ import { MAX_TEST_ATTEMPTS, gapHours, jobGate, moduleOpen, testUnlocked } from "
 import { currentModule } from "@/lib/modules";
 import type { Module } from "@/lib/types";
 import Practice from "@/components/Practice";
-import OfferTicket from "@/components/OfferTicket";
+import OfferPromise from "@/components/OfferPromise";
 import { acceptOffer, completeSection, startPlan, submitTest } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -130,10 +130,19 @@ export default async function Page({
               <p className="big-number">₱{job.pay_confirmed}<span className="ml-1 font-sans text-base font-normal text-muted">kada araw</span></p>
             </div>
 
+            {/* The Offer Promise, from assessment onward. Not shown on the foundational track, where this job has no offer path. */}
+            {!offer && a && a.sorting !== "not_yet" && (
+              <OfferPromise kind="promise" employerName={employer?.name ?? ""} jobTitle={job.title} verified={job.pay_status === "confirmed"}
+                pay={job.pay_confirmed ?? 0} start={job.deadline || null} seatHeld={!!plan || job.seats_taken < job.reserved_slots} />
+            )}
+
             {offer && (
               <>
-                <OfferTicket guaranteed={offer.guaranteed} employerName={employer?.name ?? ""} title={job.title}
-                  pay={offer.pay_confirmed} start={job.deadline} seatsTaken={job.seats_taken} slots={job.reserved_slots} />
+                <OfferPromise kind="final" offerId={offer.id} guaranteed={offer.guaranteed} employerName={employer?.name ?? ""}
+                  jobTitle={job.title} verified={job.pay_status === "confirmed"} pay={offer.pay_confirmed} start={job.deadline || null}
+                  candidateName={candidate.display_name} testKind={last?.passed ? "final" : "assessment"}
+                  datePassed={(last?.passed ? last.created_at : a?.created_at ?? offer.created_at).slice(0, 10)}
+                  seatsTaken={job.seats_taken} slots={job.reserved_slots} />
                 {last?.passed && (
                   <p className="text-base">
                     {last.scored_output.explanation ?? `Nakuha mo ang ${last.score} sa final test. Pasado: ${planModule?.passing_score}.`}
