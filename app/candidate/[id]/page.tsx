@@ -6,6 +6,8 @@ import { currentModule } from "@/lib/modules";
 import type { Module } from "@/lib/types";
 import Practice from "@/components/Practice";
 import OfferPromise from "@/components/OfferPromise";
+import ModulePath, { PathProgress } from "@/components/ModulePath";
+import { pathStep } from "@/lib/path";
 import { acceptOffer, completeSection, startPlan, submitTest } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +42,15 @@ export default async function Page({
     if (!plan || !section || !plan.assigned_sections.includes(section.id) || !moduleOpen(mod)) redirect(home);
     return (
       <section className="mx-auto grid max-w-[480px] gap-5 text-lg">
+        {(() => {
+          const assigned = mod.sections.filter((s) => plan.assigned_sections.includes(s.id));
+          const p = pathStep(assigned.map((s) => !!plan.progress[s.id]));
+          return (
+            <div className="sticky top-0 z-10 card overflow-hidden px-5">
+              <PathProgress planId={plan.id} step={p.step} total={p.total} done={p.done} sectionsDone={p.done} sectionsTotal={assigned.length} record={false} />
+            </div>
+          );
+        })()}
         <Link href={home} className="text-base font-semibold underline">← Bumalik sa module</Link>
         <div>
           <p className="text-sm text-muted">{section.skill}</p>
@@ -121,8 +132,16 @@ export default async function Page({
         const outOfTries = tries.length >= MAX_TEST_ATTEMPTS && !last?.passed;
         const offer = offers.find((o) => o.job_id === job.id && o.candidate_id === candidate.id);
 
+        const progress = plan && !offer && !outOfTries ? pathStep(sections.map((s) => !!plan.progress[s.id])) : null;
         return (
           <div key={job.id} className="grid gap-4 card p-5">
+            {/* While training, progress stays pinned at the top of the card. */}
+            {plan && progress && (
+              <div className="-mt-5">
+                <PathProgress planId={plan.id} step={progress.step} total={progress.total} done={progress.done}
+                  sectionsDone={progress.done} sectionsTotal={sections.length} />
+              </div>
+            )}
             <div>
               <p className="text-sm text-muted">{employer?.name}</p>
               <h2 className="text-xl font-bold">{job.title}</h2>
@@ -225,34 +244,16 @@ export default async function Page({
                 )}
 
                 {plan && !outOfTries && (
-                  <>
-                    <div className="grid gap-3">
-                      {sections.map((s) => (
-                        <Link key={s.id} href={`${home}?plan=${plan.id}&section=${s.id}`} className="card card-hover block p-4 hover:border-muted">
-                          <div className="font-semibold">{s.title}</div>
-                          <div className="mt-1 text-base text-muted">
-                            {gap.per[s.skill] ? `${gap.per[s.skill]} hours · ` : "Practice · "}
-                            {plan.progress[s.id] ? "Tapos na ✓" : last ? "Balikan para mag-practice" : "Buksan"}
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                    <div>
-                      <div className="h-2 overflow-hidden rounded bg-line">
-                        <div className="h-full bg-primary" style={{ width: `${sections.length ? (done / sections.length) * 100 : 0}%` }} />
-                      </div>
-                      <p className="mt-1 text-base text-muted">{done} sa {sections.length} section ang tapos</p>
-                    </div>
-                    {unlocked ? (
-                      <Link href={`${home}?plan=${plan.id}&test=1`} className={`${big} bg-primary text-white`}>
-                        {last ? "Mag-retake ng final test" : "Simulan ang final test"}
-                      </Link>
-                    ) : (
-                      <button disabled className={`${big} cursor-not-allowed bg-line text-muted`}>
-                        Final test: tapusin muna ang {sections.length - done} section
-                      </button>
-                    )}
-                  </>
+                  <ModulePath
+                    sections={sections.map((s) => ({
+                      id: s.id, skill: s.skill, title: s.title, done: !!plan.progress[s.id], hours: gap.per[s.skill] ?? null,
+                      href: `${home}?plan=${plan.id}&section=${s.id}`,
+                    }))}
+                    retry={!!last}
+                    testUnlocked={unlocked}
+                    testHref={`${home}?plan=${plan.id}&test=1`}
+                    retake={!!last}
+                  />
                 )}
               </>
             )}
