@@ -2,6 +2,8 @@ import Link from "next/link";
 import { all } from "@/lib/db";
 import { jobGate } from "@/lib/rules";
 import { runAllAssessments, runAssessment } from "./actions";
+import { runState } from "@/lib/runs";
+import AgentRunButton from "@/components/AgentRunButton";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +61,6 @@ export default async function Page() {
                     {jobs.map((j) => {
                       const a = assessments.find((x) => x.job_id === j.id && x.candidate_id === c.id);
                       const open = jobGate(j).open;
-                      const lastRun = runs.filter((r) => r.agent === "assessor" && r.ref_id === c.id).at(-1);
                       if (a)
                         return (
                           <td key={j.id} className="py-2 pr-4">
@@ -83,13 +84,9 @@ export default async function Page() {
                         );
                       return (
                         <td key={j.id} className="py-2 pr-4">
-                          <form action={runAssessment.bind(null, j.id, c.id)}>
-                            <button disabled={!open} className={btn}>
-                              {lastRun && !lastRun.ok ? "Retry assessment" : "Run assessment"}
-                            </button>
-                          </form>
+                          <AgentRunButton action={runAssessment.bind(null, j.id, c.id)} label="Run assessment" retryLabel="Retry assessment"
+                            state={runState(runs, "assessor", c.id)} disabled={!open} variant="secondary" />
                           {!open && <div className="mt-1 text-xs text-amber-800">Assessment locked (HR1)</div>}
-                          {lastRun && !lastRun.ok && <div className="mt-1 text-xs text-red-700">Last run failed: {lastRun.error}</div>}
                         </td>
                       );
                     })}

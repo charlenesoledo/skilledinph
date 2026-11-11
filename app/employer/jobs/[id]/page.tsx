@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import { all, get } from "@/lib/db";
 import { analyzeJob, confirmRate, proposeRate } from "../../actions";
 import ModulePanel from "./ModulePanel";
+import AuditPanel from "./AuditPanel";
+import AgentRunButton from "@/components/AgentRunButton";
+import { runState } from "@/lib/runs";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +15,6 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const employer = await get("employers", job.employer_id);
   const runs = (await all("runs")).filter((r) => r.ref_type === "job" && r.ref_id === job.id);
   const lastAnalyzer = runs.filter((r) => r.agent === "job_analyzer").at(-1);
-  const lastRate = runs.filter((r) => r.agent === "rate_research").at(-1);
   const band = job.rate_band_demo?.match(/₱(\d+)–₱(\d+)/);
   const suggested = band ? Math.round((Number(band[1]) + Number(band[2])) / 2 / 50) * 50 : undefined;
 
@@ -72,14 +74,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           ) : (
             <>
               <p className="mt-2 text-sm text-stone-600">The Job Analyzer breaks this Job Card into skills with target levels and a draft rubric.</p>
-              {lastAnalyzer && !lastAnalyzer.ok && (
-                <p className="mt-2 text-sm text-red-700">Last run failed: {lastAnalyzer.error}</p>
-              )}
-              <form action={analyzeJob.bind(null, job.id)} className="mt-3">
-                <button className="rounded-lg bg-emerald-800 px-4 py-2 font-semibold text-white">
-                  {lastAnalyzer && !lastAnalyzer.ok ? "Retry Job Analyzer" : "Run Job Analyzer"}
-                </button>
-              </form>
+              <div className="mt-3">
+                <AgentRunButton action={analyzeJob.bind(null, job.id)} label="Run Job Analyzer" retryLabel="Retry Job Analyzer"
+                  state={runState(runs, "job_analyzer", job.id)} />
+              </div>
             </>
           )}
         </div>
@@ -91,12 +89,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           ) : !job.rate_band_demo ? (
             <>
               <p className="mt-2 text-sm text-stone-600">Rate Research proposes a pay band for this job type from the built-in reference table.</p>
-              {lastRate && !lastRate.ok && <p className="mt-2 text-sm text-red-700">Last run failed: {lastRate.error}</p>}
-              <form action={proposeRate.bind(null, job.id)} className="mt-3">
-                <button className="rounded-lg bg-emerald-800 px-4 py-2 font-semibold text-white">
-                  {lastRate && !lastRate.ok ? "Retry Rate Research" : "Run Rate Research"}
-                </button>
-              </form>
+              <div className="mt-3">
+                <AgentRunButton action={proposeRate.bind(null, job.id)} label="Run Rate Research" retryLabel="Retry Rate Research"
+                  state={runState(runs, "rate_research", job.id)} />
+              </div>
             </>
           ) : (
             <>
@@ -127,6 +123,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       </div>
 
       <ModulePanel job={job} />
+      <AuditPanel job={job} />
     </section>
   );
 }

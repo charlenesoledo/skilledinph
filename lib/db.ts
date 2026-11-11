@@ -51,3 +51,13 @@ export async function counts(): Promise<Record<TableName, number>> {
   for (const t of TABLE_NAMES) out[t] = (await all(t)).length;
   return out;
 }
+
+// Demo-only switch for showing HR7: when set, the next agent run fails once. Stored beside the tables.
+const flagFile = path.join(DIR, "_demo_flags.json");
+export async function getFailNext(): Promise<boolean> {
+  try { return JSON.parse(await fs.readFile(flagFile, "utf8")).fail_next_run === true; } catch { return false; }
+}
+export async function setFailNext(on: boolean) {
+  await fs.mkdir(DIR, { recursive: true });
+  await fs.writeFile(flagFile, JSON.stringify({ fail_next_run: on }));
+}

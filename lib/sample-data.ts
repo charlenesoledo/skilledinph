@@ -61,3 +61,9 @@ export async function addFourthCandidate() {
     foundational_level: "Basic literacy, Taglish fluent", created_at: new Date().toISOString(),
   });
 }
+
+// Demo: the one sample "first real task" a new hire delivers back to the employer view.
+export const FIRST_TASK_SAMPLE =
+  'Checked listing "Bamboo Drawer Organizer": FLAGGED, title says ₱499 but body says ₱449. ' +
+  'Rewrote the reply draft from "We regret to inform you that the item is unavailable" to ' +
+  '"Hi po! Pasensya na, out of stock pa po ito ngayon."';

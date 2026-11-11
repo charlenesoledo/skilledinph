@@ -1,6 +1,8 @@
 import { all } from "@/lib/db";
 import { moduleVersions } from "@/lib/modules";
 import { jobGate } from "@/lib/rules";
+import { runState } from "@/lib/runs";
+import AgentRunButton from "@/components/AgentRunButton";
 import type { Job, KeyedItem } from "@/lib/types";
 import { approveModule, buildModule, editPassingScore, requestChanges } from "../../actions";
 
@@ -25,7 +27,8 @@ export default async function ModulePanel({ job }: { job: Job }) {
   const versions = await moduleVersions(job.id);
   const mod = versions.at(-1);
   const gate = jobGate(job);
-  const lastRun = (await all("runs")).filter((r) => r.agent === "module_builder" && r.ref_id === job.id).at(-1);
+  const runs = await all("runs");
+  const lastRun = runs.filter((r) => r.agent === "module_builder" && r.ref_id === job.id).at(-1);
   const failed = lastRun && !lastRun.ok;
   const regenerated = versions.some((v) => v.status === "changes_requested" && v.id !== mod?.id);
 
@@ -40,10 +43,10 @@ export default async function ModulePanel({ job }: { job: Job }) {
           <p className="mt-2 text-sm text-stone-600">
             The Module Builder writes one module for this job from your rubric and examples. Nobody can train on it until you approve it.
           </p>
-          {failed && <p className="mt-2 text-sm text-red-700">Last run failed: {lastRun.error}</p>}
-          <form action={buildModule.bind(null, job.id)} className="mt-3">
-            <button className={primary}>{failed ? "Retry Module Builder" : "Build module"}</button>
-          </form>
+          <div className="mt-3">
+            <AgentRunButton action={buildModule.bind(null, job.id)} label="Build module" retryLabel="Retry Module Builder"
+              state={runState(runs, "module_builder", job.id)} />
+          </div>
         </>
       )}
 

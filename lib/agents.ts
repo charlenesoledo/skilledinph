@@ -1,7 +1,8 @@
 // The single wrapper for every agent call (spec Section 12). Server-side only: keys never reach the browser.
 // Every run is written to `runs` (HR7). With no LLM key, or after two non-JSON replies, the built-in
 // sample output is used and the run is marked mock.
-import { insert } from "./db";
+import { all, getFailNext, insert, setFailNext } from "./db";
+import { runState } from "./runs";
 import { llmMode } from "./mode";
 import type { KeyedItem, TargetSkill } from "./types";
 import { SAMPLE_ASSESSMENT_ITEMS } from "./assessment-items";
@@ -157,6 +158,10 @@ export type AgentResult<K extends AgentName> =
 export async function runAgent<K extends AgentName>(
   name: K, input: unknown, ref: { type: string; id: string },
 ): Promise<AgentResult<K>> {
+  // HR7: one retry only. After a failure and a failed retry, the step stays failed.
+  if (runState(await all("runs"), name, ref.id).exhausted)
+    return { ok: false, error: "Retry limit reached: this run failed and its one retry also failed." };
+
   const started_at = new Date().toISOString();
   const mode = llmMode();
   let mock = mode === "mock";
@@ -164,6 +169,10 @@ export async function runAgent<K extends AgentName>(
   let error: string | null = null;
 
   try {
+    if (await getFailNext()) {
+      await setFailNext(false);
+      throw new Error("Simulated failure (demo switch): the agent returned no usable output.");
+    }
     if (mode === "mock") {
       output = MOCK[name](input);
     } else {
