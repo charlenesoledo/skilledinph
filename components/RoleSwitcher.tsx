@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 const ROLES = [
   { role: "Board", href: "/", links: [{ href: "/", label: "Board" }, { href: "/samples", label: "Demo Data" }] },
   { role: "Employer", href: "/employer", links: [{ href: "/employer", label: "Job Intake" }, { href: "/pool", label: "Candidate Pool" }] },
-  { role: "Candidate", href: "/candidate/sample", links: [] },
+  { role: "Candidate", href: "/candidate/cand_jomar", links: [] },
 ];
 
 function roleFor(path: string) {

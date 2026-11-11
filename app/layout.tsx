@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import RoleSwitcher from "@/components/RoleSwitcher";
+import { llmMode } from "@/lib/mode";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,6 +15,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="border-b border-stone-200 bg-white">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-4">
             <span className="text-xl font-bold tracking-tight">Orchestrator</span>
+            {llmMode() === "mock" && (
+              <span className="rounded bg-amber-100 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-amber-900">Mock Mode</span>
+            )}
             <RoleSwitcher />
           </div>
         </header>
