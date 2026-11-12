@@ -5,6 +5,7 @@ import { MAX_TEST_ATTEMPTS, gapHours, jobGate, moduleOpen, testUnlocked } from "
 import { currentModule } from "@/lib/modules";
 import type { Module } from "@/lib/types";
 import Practice from "@/components/Practice";
+import { T } from "@/components/Locale";
 import OfferPromise from "@/components/OfferPromise";
 import ModulePath, { PathProgress } from "@/components/ModulePath";
 import { pathStep } from "@/lib/path";
@@ -23,7 +24,7 @@ export default async function Page({
   if (!candidate)
     return (
       <section className="mx-auto max-w-[480px] text-lg">
-        <p>Walang candidate dito. <Link href="/samples" className="font-semibold underline">I-load ang sample data</Link>.</p>
+        <p><T k="noCandidate" /> <Link href="/samples" className="font-semibold underline"><T k="loadSamples" /></Link>.</p>
       </section>
     );
   const home = `/candidate/${candidate.id}`;
@@ -51,22 +52,22 @@ export default async function Page({
             </div>
           );
         })()}
-        <Link href={home} className="text-base font-semibold underline">← Bumalik sa module</Link>
+        <Link href={home} className="text-base font-semibold underline"><T k="backToModule" /></Link>
         <div>
           <p className="text-sm text-muted">{section.skill}</p>
           <h1 className="text-2xl font-bold">{section.title}</h1>
         </div>
         <p>{section.lesson_text}</p>
         <div className="rounded-xl bg-paper p-4">
-          <p className="font-bold">Halimbawa</p>
+          <p className="font-bold"><T k="example" /></p>
           <p className="mt-1">{section.worked_example}</p>
         </div>
         <Practice items={section.practice_items} />
         {plan.progress[section.id] ? (
-          <p className="rounded-xl bg-primary/10 p-4 font-semibold text-primary">Tapos mo na ang section na ito.</p>
+          <p className="rounded-xl bg-primary/10 p-4 font-semibold text-primary"><T k="sectionDone" /></p>
         ) : (
           <form action={completeSection.bind(null, plan.id, section.id)}>
-            <button className={`${big} bg-primary text-white`}>Tapos na ako dito</button>
+            <button className={`${big} bg-primary text-white`}><T k="finishSection" /></button>
           </form>
         )}
       </section>
@@ -82,17 +83,17 @@ export default async function Page({
         (plan.status !== "test_unlocked" && plan.status !== "failed_once")) redirect(home);
     return (
       <section className="mx-auto grid max-w-[480px] gap-5 text-lg">
-        <Link href={home} className="text-base font-semibold underline">← Bumalik</Link>
+        <Link href={home} className="text-base font-semibold underline"><T k="back" /></Link>
         <div>
-          <h1 className="text-2xl font-bold">Final test</h1>
+          <h1 className="text-2xl font-bold"><T k="finalTest" /></h1>
           <p className="mt-1 text-base text-muted">
-            {mod.final_test.items.length} tanong. Pasado: {mod.passing_score}, itinakda ng employer.
+            <T k="testIntro" v={{ count: mod.final_test.items.length, pass: mod.passing_score }} />
           </p>
         </div>
         <form action={submitTest.bind(null, plan.id)} className="grid gap-5">
           {mod.final_test.items.map((it, i) => (
             <fieldset key={i} className="grid gap-2 card p-4">
-              <legend className="sr-only">Tanong {i + 1}</legend>
+              <legend className="sr-only"><T k="questionN" v={{ n: i + 1 }} /></legend>
               <p>{i + 1}. {it.prompt}</p>
               {it.choices.map((c, n) => (
                 <label key={n} className="flex cursor-pointer items-start gap-3 rounded-xl border border-line px-4 py-3 has-[:checked]:border-primary has-[:checked]:bg-primary/10">
@@ -102,7 +103,7 @@ export default async function Page({
               ))}
             </fieldset>
           ))}
-          <button className={`${big} bg-primary text-white`}>Ipasa ang sagot</button>
+          <button className={`${big} bg-primary text-white`}><T k="submitAnswers" /></button>
         </form>
       </section>
     );
@@ -115,8 +116,8 @@ export default async function Page({
 
   return (
     <section className="mx-auto grid max-w-[480px] gap-5 text-lg">
-      <h1 className="text-2xl font-bold">Kumusta, {candidate.display_name}!</h1>
-      {openJobs.length === 0 && <p className="text-muted">Wala pang bukas na job para sa'yo ngayon.</p>}
+      <h1 className="text-2xl font-bold"><T k="greeting" v={{ name: candidate.display_name }} /></h1>
+      {openJobs.length === 0 && <p className="text-muted"><T k="noOpenJobs" /></p>}
       {openJobs.map((job) => {
         const employer = employers.find((e) => e.id === job.employer_id);
         const a = assessments.find((x) => x.job_id === job.id && x.candidate_id === candidate.id);
@@ -145,8 +146,8 @@ export default async function Page({
             <div>
               <p className="text-sm text-muted">{employer?.name}</p>
               <h2 className="text-xl font-bold">{job.title}</h2>
-              <p className="mt-3 text-sm text-muted">Sahod</p>
-              <p className="big-number">₱{job.pay_confirmed}<span className="ml-1 font-sans text-base font-normal text-muted">kada araw</span></p>
+              <p className="mt-3 text-sm text-muted"><T k="pay" /></p>
+              <p className="big-number">₱{job.pay_confirmed}<span className="ml-1 font-sans text-base font-normal text-muted"><T k="perDayLong" /></span></p>
             </div>
 
             {/* The Offer Promise, from assessment onward. Not shown on the foundational track, where this job has no offer path. */}
@@ -164,39 +165,38 @@ export default async function Page({
                   seatsTaken={job.seats_taken} slots={job.reserved_slots} />
                 {last?.passed && (
                   <p className="text-base">
-                    {last.scored_output.explanation ?? `Nakuha mo ang ${last.score} sa final test. Pasado: ${planModule?.passing_score}.`}
+                    {last.scored_output.explanation ?? <T k="resultFallback" v={{ score: last.score, pass: planModule?.passing_score ?? "" }} />}
                   </p>
                 )}
                 {offer.status === "offered" && (
                   <form action={acceptOffer.bind(null, offer.id)}>
-                    <button className={`${big} bg-primary text-white`}>Tanggapin ang offer</button>
+                    <button className={`${big} bg-primary text-white`}><T k="acceptOffer" /></button>
                   </form>
                 )}
                 {offer.status === "accepted" && (
-                  <p className="rounded-xl bg-primary/10 p-4 font-semibold text-primary">Tinanggap mo na ang offer. Welcome sa team!</p>
+                  <p className="rounded-xl bg-primary/10 p-4 font-semibold text-primary"><T k="accepted" /></p>
                 )}
                 {offer.status === "waitlisted" && (
                   <p className="rounded-xl bg-paper p-4 text-base">
-                    Puno na ang {job.reserved_slots} slots para sa job na ito, kaya nasa waitlist ka. Hindi pa ito garantisado.
-                    Sasabihan ka namin kapag may nabakanteng slot.
+                    <T k="waitlistNote" v={{ slots: job.reserved_slots }} />
                   </p>
                 )}
               </>
             )}
 
-            {!offer && !a && <p className="text-muted">Wala ka pang assessment para sa job na ito. Maiikling task lang ito, hindi written exam.</p>}
+            {!offer && !a && <p className="text-muted"><T k="noAssessment" /></p>}
 
             {!offer && a?.sorting === "ready" && (
               <div className="rounded-xl bg-primary/10 p-4">
-                <p className="font-bold text-primary">Handa ka na!</p>
-                <p className="mt-1 text-base">Naabot mo ang lahat ng target ng employer. Hindi mo na kailangan ng module.</p>
+                <p className="font-bold text-primary"><T k="ready" /></p>
+                <p className="mt-1 text-base"><T k="readyBody" /></p>
               </div>
             )}
 
             {!offer && a?.sorting === "trainable" && gap && (
               <>
                 <div>
-                  <h3 className="font-bold">Ang kulang mo</h3>
+                  <h3 className="font-bold"><T k="yourGap" /></h3>
                   <ul className="mt-2 grid gap-3 text-base">
                     {Object.entries(gap.per).map(([skill, hours]) => {
                       const target = job.target_skills.find((s) => s.skill === skill)!.target;
@@ -215,31 +215,31 @@ export default async function Page({
                     })}
                   </ul>
                 </div>
-                <p className="text-xl font-bold">Ang module mo: ~{plan ? plan.personal_hours : gap.total} hours</p>
+                <p className="text-xl font-bold"><T k="yourModule" v={{ hours: plan ? plan.personal_hours : gap.total }} /></p>
 
                 {!plan && !moduleOpen(mod) && (
                   <div className="rounded-xl bg-accent/20 p-4 text-base">
-                    <p className="font-bold text-ink">Naka-lock pa ang module</p>
-                    <p className="mt-1">Hinihintay pa ang approval ng employer. Hindi pa ito mabubuksan hangga't hindi aprubado.</p>
+                    <p className="font-bold text-ink"><T k="moduleLocked" /></p>
+                    <p className="mt-1"><T k="moduleLockedBody" /></p>
                   </div>
                 )}
 
                 {!plan && moduleOpen(mod) && (
                   <>
                     <p className="text-base text-muted">
-                      Aprubado na ng employer ang module. {mod.sections.filter((s) => s.skill in gap.per).length} section lang ang para sa'yo.
+                      <T k="moduleApproved" v={{ count: mod.sections.filter((s) => s.skill in gap.per).length }} />
                     </p>
                     <form action={startPlan.bind(null, candidate.id, job.id)}>
-                      <button className={`${big} bg-primary text-white`}>Simulan ang module</button>
+                      <button className={`${big} bg-primary text-white`}><T k="startModule" /></button>
                     </form>
                   </>
                 )}
 
                 {plan && last && !last.passed && (
                   <div className="rounded-xl bg-paper p-4 text-base">
-                    <p className="text-sm font-semibold text-muted">Resulta</p>
-                    <p className="big-number mt-1">{last.score}<span className="ml-2 font-sans text-base font-normal text-muted">pasado: {planModule?.passing_score}</span></p>
-                    <p className="mt-1">{last.scored_output.explanation ?? "Naka-save ang resulta mo."}</p>
+                    <p className="text-sm font-semibold text-muted"><T k="result" /></p>
+                    <p className="big-number mt-1">{last.score}<span className="ml-2 font-sans text-base font-normal text-muted"><T k="passMarkShort" v={{ pass: planModule?.passing_score ?? "" }} /></span></p>
+                    <p className="mt-1">{last.scored_output.explanation ?? <T k="resultSaved" />}</p>
                   </div>
                 )}
 
@@ -260,12 +260,11 @@ export default async function Page({
 
             {a?.sorting === "not_yet" && gap && (
               <div className="rounded-xl bg-paper p-4 text-base">
-                <p className="text-lg font-bold text-primary">May daan para sa'yo</p>
+                <p className="text-lg font-bold text-primary"><T k="notYetTitle" /></p>
                 <p className="mt-1">
-                  Sa ngayon, mga ~{gap.total} oras pa ang kailangang aralin para sa job na ito, kaya uunahin muna natin ang
-                  {" "}<b>Foundational Track</b>: mga basic na aralin sa pagbasa at pag-check ng detalye.
+                  <T k="notYetLead" v={{ hours: gap.total }} />{" "}<b><T k="notYetTrack" /></b><T k="notYetTail" />
                 </p>
-                <p className="mt-2">Pagkatapos noon, babalikan natin ang mga job na tulad nito. Naka-save ang resulta mo.</p>
+                <p className="mt-2"><T k="notYetAfter" /></p>
               </div>
             )}
           </div>

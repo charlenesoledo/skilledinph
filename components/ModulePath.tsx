@@ -4,22 +4,7 @@ import Link from "next/link";
 import { useLayoutEffect, useRef } from "react";
 import { animate, useReducedMotion } from "motion/react";
 import { DUR_PROGRESS, EASE_ENTER } from "@/lib/motion";
-
-// Taglish labels for the path, in one place (Phase B moves them into the shared dictionary).
-const S = {
-  step: (x: number, y: number) => `Hakbang ${x} sa ${y}`,
-  sectionsDone: (d: number, n: number) => `${d} sa ${n} section ang tapos`,
-  next: "Susunod",
-  done: "Tapos na ✓",
-  open: "Buksan",
-  practiceAgain: "Balikan para mag-practice",
-  locked: "Naka-lock",
-  hours: (h: number) => `${h} hours`,
-  practice: "Practice",
-  startTest: "Simulan ang final test",
-  retakeTest: "Mag-retake ng final test",
-  testLocked: (n: number) => `Final test: tapusin muna ang ${n} section`,
-};
+import { useT } from "./Locale";
 
 export type PathSection = { id: string; skill: string; title: string; done: boolean; hours: number | null; href: string };
 
@@ -30,6 +15,7 @@ export function PathProgress({ planId, step, total, done, sectionsDone, sections
   record?: boolean; // false on a section page, so the path page still sees the change and animates it
 }) {
   const reduce = useReducedMotion();
+  const t = useT();
   const target = total ? done / total : 0;
   const bar = useRef<HTMLSpanElement>(null);
   // Where the bar starts for the current target. Kept in a ref so a repeated effect run (React dev mode
@@ -60,8 +46,8 @@ export function PathProgress({ planId, step, total, done, sectionsDone, sections
   return (
     <div className="sticky top-0 z-10 -mx-5 border-b border-line bg-card/95 px-5 py-3">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="font-display text-lg font-bold tabular-nums">{S.step(step, total)}</p>
-        <p className="text-sm text-muted tabular-nums">{S.sectionsDone(sectionsDone, sectionsTotal)}</p>
+        <p className="font-display text-lg font-bold tabular-nums">{t("step", { x: step, y: total })}</p>
+        <p className="text-sm text-muted tabular-nums">{t("sectionsDone", { done: sectionsDone, total: sectionsTotal })}</p>
       </div>
       <span className="mt-2 block h-2 overflow-hidden rounded-full bg-line" aria-hidden>
         <span ref={bar} className="block h-full origin-left rounded-full bg-primary" style={{ transform: `scaleX(${target})` }} />
@@ -77,6 +63,7 @@ export default function ModulePath({
 }: {
   sections: PathSection[]; retry: boolean; testUnlocked: boolean; testHref: string; retake: boolean;
 }) {
+  const t = useT();
   const nextIndex = sections.findIndex((s) => !s.done); // -1: all sections done, so the test is next
   const doneCount = sections.filter((s) => s.done).length;
   return (
@@ -89,7 +76,7 @@ export default function ModulePath({
               {state === "locked" ? (
                 <div className="rounded-xl border border-line p-4 text-muted">
                   <p className="font-semibold">{s.skill}</p>
-                  <p className="mt-1 text-base">{S.locked}</p>
+                  <p className="mt-1 text-base">{t("locked")}</p>
                 </div>
               ) : (
                 <Link
@@ -98,14 +85,14 @@ export default function ModulePath({
                 >
                   {state === "next" && (
                     <span className="mb-2 inline-block rounded-full bg-primary px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
-                      {S.next}
+                      {t("next")}
                     </span>
                   )}
                   <p className="text-sm text-muted">{s.skill}</p>
                   <p className="font-semibold">{s.title}</p>
                   <p className="mt-1 text-base text-muted">
-                    {s.hours ? `${S.hours(s.hours)} · ` : `${S.practice} · `}
-                    {s.done ? S.done : retry ? S.practiceAgain : S.open}
+                    {s.hours ? `${t("hours", { hours: s.hours })} · ` : `${t("practice")} · `}
+                    {s.done ? t("done") : retry ? t("practiceAgain") : t("open")}
                   </p>
                 </Link>
               )}
@@ -115,11 +102,11 @@ export default function ModulePath({
         <Node state={testUnlocked ? "next" : "locked"} last>
           {testUnlocked ? (
             <Link href={testHref} className="block w-full rounded-xl bg-primary px-4 py-4 text-center text-lg font-semibold text-white">
-              {retake ? S.retakeTest : S.startTest}
+              {retake ? t("retakeTest") : t("startTest")}
             </Link>
           ) : (
             <button disabled className="block w-full cursor-not-allowed rounded-xl bg-line px-4 py-4 text-center text-lg font-semibold text-muted">
-              {S.testLocked(sections.length - doneCount)}
+              {t("testLocked", { left: sections.length - doneCount })}
             </button>
           )}
         </Node>

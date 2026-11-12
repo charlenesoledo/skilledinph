@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useCountUp } from "./useCountUp";
 import { COUNT_REVEAL_MS, DUR_MED, EASE_ENTER } from "@/lib/motion";
-import { OFFER_STRINGS, fill, type OfferStringKey } from "@/lib/i18n/offer-strings";
+import { useT } from "./Locale";
+import type { StringKey, Values } from "@/lib/i18n/candidate";
 
 type Common = {
   employerName: string;
@@ -29,7 +30,7 @@ export type OfferPromiseProps =
 // One card, from assessment onward. Before the offer it states the promise; once the Matcher has made
 // the offer it keeps the same anatomy and adds the certificate: who, which test, when, and the stamp.
 export default function OfferPromise(props: OfferPromiseProps) {
-  const t = (key: OfferStringKey, values?: Record<string, string | number>) => fill(OFFER_STRINGS.tl[key], values);
+  const t = useT();
   const final = props.kind === "final";
   return (
     <div className={`grid gap-3 rounded-2xl bg-card p-5 ${final ? "border-2 border-dashed border-ink" : "border border-line shadow-card"}`}>
@@ -51,7 +52,7 @@ export default function OfferPromise(props: OfferPromiseProps) {
   );
 }
 
-type T = (key: OfferStringKey, values?: Record<string, string | number>) => string;
+type T = (key: StringKey, values?: Values) => string;
 
 function PromiseBody(p: Extract<OfferPromiseProps, { kind: "promise" }> & { t: T }) {
   const { t } = p;
