@@ -4,6 +4,7 @@ import { analyzeJob, confirmRate, proposeRate } from "../../actions";
 import ModulePanel from "./ModulePanel";
 import AuditPanel from "./AuditPanel";
 import SourcesPanel from "@/components/SourcesPanel";
+import PipelineStrip from "@/components/PipelineStrip";
 import TargetBar from "@/components/TargetBar";
 import SkillBars from "@/components/SkillBars";
 import AgentRunButton from "@/components/AgentRunButton";
@@ -38,6 +39,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <h1 className="text-2xl font-bold">{job.title}</h1>
         <p className="mt-1 text-sm"><span className="rounded bg-line px-2 py-1 font-mono text-xs uppercase">{job.status}</span></p>
       </div>
+      <PipelineStrip jobId={job.id} compact />
 
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="card p-5">

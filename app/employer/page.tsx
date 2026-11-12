@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { all } from "@/lib/db";
 import { createJob } from "./actions";
+import PipelineStrip from "@/components/PipelineStrip";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,8 @@ export default async function Page() {
   const [jobs, employers] = await Promise.all([all("jobs"), all("employers")]);
   const employer = employers[0];
   return (
+    <div className="grid gap-8">
+    <PipelineStrip />
     <section className="grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
       <div>
         <h1 className="text-2xl font-bold">Job Intake</h1>
@@ -73,5 +76,6 @@ export default async function Page() {
         </ul>
       </div>
     </section>
+    </div>
   );
 }
