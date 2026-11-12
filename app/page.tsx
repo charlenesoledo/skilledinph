@@ -5,6 +5,8 @@ import { candidateCard, candidateStage } from "@/lib/stages";
 import type { Module } from "@/lib/types";
 import BoardColumns, { type BoardCard } from "@/components/BoardColumns";
 import BoardStats, { type BoardStatsData } from "@/components/BoardStats";
+import PresentBoard from "@/components/PresentBoard";
+import { currentWorkspace } from "@/lib/workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -69,12 +71,19 @@ export default async function Page() {
           </p>
         )}
       </div>
-      <BoardStats stats={stats} />
-      <BoardColumns cards={cards} />
-      {foundational.length > 0 && (
-        <p className="text-sm text-muted">
-          Routed to the foundational track for now: {foundational.join(", ")}. No offer on this job yet, and the door stays open.
-        </p>
+      {(await currentWorkspace()) === "demo" ? (
+        // Demo Board: the same view, plus Present Mode (a staged walk; the data is untouched).
+        <PresentBoard cards={cards} stats={stats} foundational={foundational} />
+      ) : (
+        <>
+          <BoardStats stats={stats} />
+          <BoardColumns cards={cards} />
+          {foundational.length > 0 && (
+            <p className="text-sm text-muted">
+              Routed to the foundational track for now: {foundational.join(", ")}. No offer on this job yet, and the door stays open.
+            </p>
+          )}
+        </>
       )}
     </section>
   );
