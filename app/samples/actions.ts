@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { currentWorkspace } from "@/lib/workspace";
 import { all, clearAll, dbStats, get, getFailNext, setFailNext, storageLabel } from "@/lib/db";
 import { SAMPLE_JOB_ID, addFourthCandidate, loadSampleData } from "@/lib/sample-data";
 import { currentModule } from "@/lib/modules";
@@ -39,6 +40,7 @@ const form = (key: string, value: string) => {
 // Steps the sample job through the whole loop with no manual data entry, using the same actions
 // and rules as the screens. An agent step that fails is retried once (HR7).
 export async function runFullDemo() {
+  if ((await currentWorkspace()) !== "demo") return; // the scripted loop runs on the demo workspace only
   const started = Date.now();
   const callsBefore = dbStats.calls;
   await loadSampleData();

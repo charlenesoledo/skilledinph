@@ -1,5 +1,6 @@
 // Spec Section 9 sample data. Everything here is fictional.
 import { clearAll, get, insert, insertMany } from "./db";
+import { currentWorkspace } from "./workspace";
 import type { Candidate, Employer, Job } from "./types";
 
 export const SAMPLE_EMPLOYER_ID = "emp_tidynest";
@@ -15,6 +16,7 @@ export const SAMPLE_SCORES: Record<string, Record<string, number>> = {
 };
 
 export async function loadSampleData() {
+  if ((await currentWorkspace()) !== "demo") return; // the seeded sample set belongs to the demo workspace only
   await clearAll();
   const now = new Date().toISOString();
 
@@ -51,6 +53,7 @@ export async function loadSampleData() {
 
 // Spec Section 9: a 4th fictional candidate may be added to prove HR5 (seats full -> waitlist, NOT GUARANTEED).
 export async function addFourthCandidate() {
+  if ((await currentWorkspace()) !== "demo") return;
   if (await get("candidates", "cand_paolo")) return;
   await insert("candidates", {
     id: "cand_paolo", display_name: "Paolo", phone_label: "Android phone (fictional)", location_label: "Davao Region",

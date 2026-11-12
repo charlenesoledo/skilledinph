@@ -11,6 +11,8 @@ import { candidateCard, candidateStage } from "@/lib/stages";
 import { currentModule } from "@/lib/modules";
 import type { Module } from "@/lib/types";
 import { OFFER_ICONS, SORT_ICONS } from "@/components/CandidateIcons";
+import { currentWorkspace } from "@/lib/workspace";
+import type { CandidateProfile } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -18,16 +20,40 @@ const SORT_LABEL = { ready: "READY", trainable: "TRAINABLE", not_yet: "NOT YET" 
 const SORT_STYLE = { ready: "bg-primary/10 text-primary", trainable: "bg-accent/30 text-ink", not_yet: "bg-line text-ink" } as const;
 const btn = "rounded-lg border border-line px-3 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40";
 
+// A Live pool record: background and goals, never scores.
+function PoolProfile({ profile }: { profile: CandidateProfile }) {
+  const rows: [string, string][] = [
+    ["Background", profile.background], ["Strengths", profile.strengths], ["Device", profile.device],
+    ["Availability", profile.availability], ["Goal", profile.goal],
+  ];
+  return (
+    <dl className="grid grid-cols-[88px_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs">
+      {rows.map(([k, v]) => (
+        <div key={k} className="contents">
+          <dt className="text-muted">{k}</dt>
+          <dd>{v}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export default async function Page() {
-  const [candidates, jobs, assessments, runs, offers, employers, plans, profiles] = await Promise.all([
+  const [candidates, jobs, assessments, runs, offers, employers, plans, profiles, workspace] = await Promise.all([
     all("candidates"), all("jobs"), all("assessments"), all("runs"), all("offers"), all("employers"), all("candidate_plans"), all("skill_profiles"),
+    currentWorkspace(),
   ]);
+  const live = workspace === "live";
   const current = new Map<string, Module | undefined>();
   for (const j of jobs) current.set(j.id, await currentModule(j.id));
   return (
     <section>
       <h1 className="text-2xl font-bold">Candidate Pool</h1>
-      <p className="mt-2 text-muted">All candidates are fictional demo people. Demo scores are seeded from the sample data.</p>
+      <p className="mt-2 text-muted">
+        {live
+          ? "All pool records are fictional. A record holds background and goals only: scores exist only after the person answers a Skill Check."
+          : "All candidates are fictional demo people. Demo scores are seeded from the sample data."}
+      </p>
       {candidates.length === 0 ? (
         <p className="mt-4 text-muted">
           No candidates yet. <Link href="/samples" className="font-semibold underline">Load the sample data</Link>.
@@ -44,9 +70,11 @@ export default async function Page() {
                     {": "}
                     <span className={g.open ? "text-primary" : "font-medium text-ink"}>{g.reason}</span>
                   </span>
-                  <form action={runAllAssessments.bind(null, j.id)}>
-                    <PendingButton disabled={!g.open} className={btn} label="Run all assessments" pendingLabel="Running…" pendingClassName={RUNNING_STYLE} />
-                  </form>
+                  {!live && (
+                    <form action={runAllAssessments.bind(null, j.id)}>
+                      <PendingButton disabled={!g.open} className={btn} label="Run all assessments" pendingLabel="Running…" pendingClassName={RUNNING_STYLE} />
+                    </form>
+                  )}
                 </li>
               );
             })}
@@ -57,6 +85,7 @@ export default async function Page() {
               return (
                 <li key={c.id} className="card grid content-start gap-4 p-5">
                   <CandidateCardBody data={candidateCard(c, stage.since, { jobs, employers, assessments, profiles })} />
+                  {c.profile && <PoolProfile profile={c.profile} />}
                   {jobs.map((j) => {
                     const a = assessments.find((x) => x.job_id === j.id && x.candidate_id === c.id);
                     const open = jobGate(j).open;
@@ -96,6 +125,8 @@ export default async function Page() {
                               skills={j.target_skills.map((s) => ({ label: s.skill.split(" ")[0], score: a.score_per_skill[s.skill] ?? 0, target: s.target }))}
                             />
                           </>
+                        ) : live ? (
+                          <p className="text-muted">No Skill Check answered yet.</p>
                         ) : (
                           <>
                             <AgentRunButton action={runAssessment.bind(null, j.id, c.id)} label="Run assessment" retryLabel="Retry assessment"

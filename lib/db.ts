@@ -2,9 +2,12 @@
 // - Supabase, when NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are both set (tables in supabase/schema.sql).
 // - Otherwise the local JSON fallback: one file per table under /data (spec Section 8).
 // Server-side only: the service role key never reaches the browser.
+// Every row belongs to a workspace ("demo" or "live", lib/workspace.ts). Reads, lookups and clears see only
+// the viewer's current workspace, and inserts are stamped with it.
 import { promises as fs } from "fs";
 import path from "path";
-import { TABLE_NAMES, type TableName, type Tables } from "./types";
+import { LIVE_TABLE_NAMES, TABLE_NAMES, type TableName, type Tables } from "./types";
+import { currentWorkspace, type Workspace } from "./workspace";
 
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
 const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -29,11 +32,13 @@ async function sb(pathAndQuery: string, init: RequestInit & { prefer?: string } 
   const body = await res.text();
   return body ? JSON.parse(body) : null;
 }
-// `seq` is a database-only column that keeps rows in insertion order. It is never part of an app row.
+// `seq` (insertion order) and `workspace` are database-only columns. They are never part of an app row.
 const strip = <R>(row: R): R => {
-  const { seq: _seq, ...rest } = row as R & { seq?: number };
+  const { seq: _seq, workspace: _ws, ...rest } = row as R & { seq?: number; workspace?: string };
   return rest as R;
 };
+const inWorkspace = (row: unknown, ws: Workspace) => ((row as { workspace?: string }).workspace ?? "demo") === ws;
+const stamp = <R>(row: R, ws: Workspace) => ({ ...strip(row), workspace: ws });
 const byId = (id: string) => `id=eq.${encodeURIComponent(id)}`;
 
 // ---------- Local JSON ----------
@@ -70,23 +75,27 @@ const modifyFile = <T extends TableName, R>(table: T, fn: (rows: Tables[T][]) =>
 
 // ---------- Public API ----------
 export async function all<T extends TableName>(table: T): Promise<Tables[T][]> {
-  if (usingSupabase) return ((await sb(`${table}?select=*&order=seq.asc`)) as Tables[T][]).map(strip);
-  return readFile(table);
+  const ws = await currentWorkspace();
+  if (usingSupabase) return ((await sb(`${table}?select=*&workspace=eq.${ws}&order=seq.asc`)) as Tables[T][]).map(strip);
+  return (await readFile(table)).filter((r) => inWorkspace(r, ws)).map(strip);
 }
 
 export async function get<T extends TableName>(table: T, id: string): Promise<Tables[T] | undefined> {
   if (!id) return undefined;
+  const ws = await currentWorkspace();
   if (usingSupabase) {
-    const rows = (await sb(`${table}?select=*&${byId(id)}`)) as Tables[T][];
+    const rows = (await sb(`${table}?select=*&${byId(id)}&workspace=eq.${ws}`)) as Tables[T][];
     return rows[0] ? strip(rows[0]) : undefined;
   }
-  return (await readFile(table)).find((r) => r.id === id);
+  const row = (await readFile(table)).find((r) => r.id === id && inWorkspace(r, ws));
+  return row ? strip(row) : undefined;
 }
 
 export async function insert<T extends TableName>(table: T, row: Tables[T]): Promise<Tables[T]> {
   const clean = strip(row);
-  if (usingSupabase) await sb(table, { method: "POST", body: JSON.stringify(clean), prefer: "return=minimal" });
-  else await modifyFile(table, (rows) => ({ rows: [...rows, clean], result: null }));
+  const stored = stamp(row, await currentWorkspace());
+  if (usingSupabase) await sb(table, { method: "POST", body: JSON.stringify(stored), prefer: "return=minimal" });
+  else await modifyFile(table, (rows) => ({ rows: [...rows, stored as Tables[T]], result: null }));
   return clean;
 }
 
@@ -94,8 +103,10 @@ export async function insert<T extends TableName>(table: T, row: Tables[T]): Pro
 export async function insertMany<T extends TableName>(table: T, rows: Tables[T][]): Promise<Tables[T][]> {
   const clean = rows.map(strip);
   if (clean.length === 0) return clean;
-  if (usingSupabase) await sb(table, { method: "POST", body: JSON.stringify(clean), prefer: "return=minimal" });
-  else await modifyFile(table, (rows) => ({ rows: [...rows, ...clean], result: null }));
+  const ws = await currentWorkspace();
+  const stored = rows.map((r) => stamp(r, ws));
+  if (usingSupabase) await sb(table, { method: "POST", body: JSON.stringify(stored), prefer: "return=minimal" });
+  else await modifyFile(table, (existing) => ({ rows: [...existing, ...(stored as Tables[T][])], result: null }));
   return clean;
 }
 
@@ -110,15 +121,18 @@ export async function update<T extends TableName>(table: T, id: string, patch: P
   return modifyFile(table, (rows) => {
     const i = rows.findIndex((r) => r.id === id);
     if (i < 0) throw new Error(`${table}: no row with id ${id}`);
-    rows[i] = { ...rows[i], ...patch };
-    return { rows, result: rows[i] };
+    rows[i] = { ...rows[i], ...strip(patch) };
+    return { rows, result: strip(rows[i]) };
   });
 }
 
+// Clears the current workspace only. Resetting the demo never touches Live records, and the reverse.
 export async function clearAll() {
+  const ws = await currentWorkspace();
+  const tables = [...TABLE_NAMES, ...LIVE_TABLE_NAMES];
   if (usingSupabase)
-    await Promise.all(TABLE_NAMES.map((t) => sb(`${t}?id=neq.__none__`, { method: "DELETE", prefer: "return=minimal" })));
-  else for (const t of TABLE_NAMES) await writeFile(t, []);
+    await Promise.all(tables.map((t) => sb(`${t}?workspace=eq.${ws}`, { method: "DELETE", prefer: "return=minimal" })));
+  else for (const t of tables) await modifyFile(t, (rows) => ({ rows: rows.filter((r) => !inWorkspace(r, ws)), result: null }));
 }
 
 export async function counts(): Promise<Record<TableName, number>> {

@@ -15,6 +15,10 @@ export type Job = {
 export type Candidate = {
   id: string; display_name: string; phone_label: string; location_label: string;
   foundational_level: string; created_at: string;
+  profile?: CandidateProfile | null; // Live pool records only: background and goals, never scores
+};
+export type CandidateProfile = {
+  background: string; education: string; strengths: string; device: string; availability: string; goal: string;
 };
 
 export type SkillProfile = {
@@ -66,13 +70,42 @@ export type Run = {
   started_at: string; finished_at: string; ok: boolean; error: string | null; mock: boolean;
 };
 
+// ---- Live workspace ----
+export type KnowledgeBase = {
+  id: string; employer_id: string; file_name: string; kind: "md" | "txt" | "pdf"; body: string; version: number; updated_at: string;
+};
+
+// One Skill Check task. Single-choice tasks score by the points of the chosen option; multi-select tasks
+// score per correct option found, plus a bonus when no correct detail is falsely flagged.
+export type PackChoice = { key: string; text: string };
+export type PackItem = {
+  n: number; skill: string; title_tl: string; title_en: string; prompt: string; quote?: string;
+  choices: PackChoice[]; source: string; rule: string;
+} & (
+  | { kind: "single"; points: Record<string, number>; answer: string }
+  | { kind: "multi"; correct: string[]; per_hit: number; bonus_if_no_false: number }
+);
+export type AssessmentPack = {
+  id: string; job_id: string; version: number; status: "draft" | "employer_approved";
+  items: PackItem[]; sources: string; created_at: string; approved_at: string | null;
+};
+export type ScoredTask = { n: number; skill: string; answer: string[]; points: number; max: number; note: string };
+export type SkillCheck = {
+  id: string; job_id: string; candidate_id: string; pack_id: string; status: "sent" | "submitted";
+  answers: Record<string, string[]> | null; scored: { tasks: ScoredTask[]; per_skill: Record<string, number> } | null;
+  sent_at: string; submitted_at: string | null;
+};
+
 export type Tables = {
   employers: Employer; jobs: Job; candidates: Candidate; skill_profiles: SkillProfile;
   assessments: Assessment; modules: Module; candidate_plans: CandidatePlan;
   test_results: TestResult; offers: Offer; ratings: Rating; runs: Run;
+  knowledge_bases: KnowledgeBase; assessment_packs: AssessmentPack; skill_checks: SkillCheck;
 };
 export type TableName = keyof Tables;
 export const TABLE_NAMES: TableName[] = [
   "employers", "jobs", "candidates", "skill_profiles", "assessments", "modules",
   "candidate_plans", "test_results", "offers", "ratings", "runs",
 ];
+// Tables added for the Live workspace (supabase/live-workspace.sql). Cleared with the rest of a workspace.
+export const LIVE_TABLE_NAMES: TableName[] = ["knowledge_bases", "assessment_packs", "skill_checks"];

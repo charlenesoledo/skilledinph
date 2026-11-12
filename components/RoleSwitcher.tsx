@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { Workspace } from "@/lib/workspace";
 
 // Demo role switcher (no login). The active role is derived from the URL,
 // so there is no hidden role state in the UI.
@@ -17,14 +18,17 @@ function roleFor(path: string) {
   return "Board";
 }
 
-export default function RoleSwitcher() {
+export default function RoleSwitcher({ workspace }: { workspace: Workspace }) {
   const path = usePathname();
+  // The Candidate tab opens Jomar in either workspace; Live pool records carry a live_ id.
+  const roles = ROLES.map((r) => (r.role === "Candidate" && workspace === "live" ? { ...r, href: "/candidate/live_cand_jomar" } : r))
+    .map((r) => (r.role === "Board" && workspace === "live" ? { ...r, links: [{ href: "/", label: "Board" }, { href: "/samples", label: "Live Data" }] } : r));
   const active = roleFor(path);
-  const links = ROLES.find((r) => r.role === active)?.links ?? [];
+  const links = roles.find((r) => r.role === active)?.links ?? [];
   return (
     <nav className="flex flex-1 flex-wrap items-center gap-x-6 gap-y-2" aria-label="Role switcher">
       <div className="flex rounded-full border border-line p-0.5 text-sm">
-        {ROLES.map((r) => (
+        {roles.map((r) => (
           <Link
             key={r.role}
             href={r.href}

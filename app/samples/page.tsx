@@ -3,6 +3,8 @@ import { all, counts, getFailNext, storageLabel } from "@/lib/db";
 import PendingButton from "@/components/PendingButton";
 import FullDemoRunner from "@/components/FullDemoRunner";
 import { addFourth, loadSamples, resetSamples, runFullDemo, toggleFailNext } from "./actions";
+import { resetLive } from "../workspace-actions";
+import { currentWorkspace } from "@/lib/workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -10,9 +12,22 @@ const primary = "rounded-lg bg-primary px-4 py-2 font-semibold text-white";
 const secondary = "rounded-lg border border-line px-4 py-2 font-semibold disabled:opacity-40";
 
 export default async function Page() {
-  const [c, runs, failNext] = await Promise.all([counts(), all("runs"), getFailNext()]);
+  const [c, runs, failNext, workspace] = await Promise.all([counts(), all("runs"), getFailNext(), currentWorkspace()]);
   return (
     <section className="grid gap-8">
+      {workspace === "live" ? (
+        <div className="max-w-2xl">
+          <h1 className="text-2xl font-bold">Live Data</h1>
+          <p className="mt-2 text-muted">
+            The Live workspace keeps saved records: TidyNest Online with its Knowledge Base, the Listing &amp; Reply Checker job, and the
+            6 pool records. Nobody has a score until they answer a Skill Check. The demo workspace is never touched from here.
+          </p>
+          <form action={resetLive} className="mt-5">
+            <PendingButton label="Reset the Live workspace" pendingLabel="Resetting…" className={secondary} />
+          </form>
+          <p className="mt-3 text-sm text-muted">Reset wipes every Live record and loads the starting records again.</p>
+        </div>
+      ) : (
       <div className="max-w-2xl">
         <h1 className="text-2xl font-bold">Demo Data</h1>
         <p className="mt-2 text-muted">
@@ -42,6 +57,7 @@ export default async function Page() {
           The failure switch is a demo tool: the next agent run fails once, is logged below, and can be retried once.
         </p>
       </div>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div>
