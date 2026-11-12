@@ -6,6 +6,7 @@ import { animate, useReducedMotion } from "motion/react";
 import { DUR_PROGRESS, EASE_ENTER } from "@/lib/motion";
 import { useLocale, useT } from "./Locale";
 import { SECTION_EN } from "@/lib/i18n/sections";
+import { GROWTH_UNITS } from "@/lib/growth";
 import { BookOpen, Check, FileCheck, Lock } from "lucide-react";
 import { SkillLabel } from "./CandidateIcons";
 
@@ -147,6 +148,23 @@ export default function ModulePath({
           )}
         </Node>
       </ol>
+      {/* Bonus units (Layer B): optional, display only. They are not part of the course progress, the module
+          hours, or the final-test lock above. */}
+      <div className="grid gap-2 border-t border-line pt-4">
+        <p className="font-semibold">{t("bonusTitle")}</p>
+        <ul className="grid gap-2">
+          {GROWTH_UNITS.map((u) => (
+            <li key={u.key} className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-line px-4 py-3 text-sm">
+              <span>{locale === "en" ? u.title_en : u.title_tl}</span>
+              <span className="flex shrink-0 items-center gap-2 text-muted tabular-nums">
+                {t("courseMinutes", { min: u.minutes })}
+                <span className="rounded bg-line px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-ink">{t("bonusOptional")}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="text-xs text-muted">{t("bonusNote")}</p>
+      </div>
     </div>
   );
 }

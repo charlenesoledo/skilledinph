@@ -10,6 +10,8 @@ import OfferPromise from "@/components/OfferPromise";
 import ResultMessage from "@/components/ResultMessage";
 import SkillCheckCard from "@/components/SkillCheckCard";
 import SkillCheckForm from "@/components/SkillCheckForm";
+import SkillPathCard from "@/components/SkillPathCard";
+import { hasLearningLayer } from "@/lib/growth";
 import { submitSkillCheck } from "@/app/pool/skillcheck-actions";
 import ModulePath, { PathProgress } from "@/components/ModulePath";
 import { pathStep } from "@/lib/path";
@@ -399,6 +401,17 @@ export default async function Page({
           </div>
         );
       })}
+      {(() => {
+        // The skill path (display only): the skills this job builds and where it leads.
+        const pathJob = jobs.find((j) => hasLearningLayer(j.id));
+        if (!pathJob) return null;
+        const a = assessments.find((x) => x.job_id === pathJob.id && x.candidate_id === candidate.id);
+        const foundational = a?.sorting === "not_yet" || !!candidate.profile?.goal.startsWith("Foundational Track");
+        return (
+          <SkillPathCard foundational={foundational}
+            skills={pathJob.target_skills.map((s) => ({ skill: s.skill, met: a ? (a.score_per_skill[s.skill] ?? 0) >= s.target : null }))} />
+        );
+      })()}
     </section>
   );
 }

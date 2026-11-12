@@ -139,6 +139,15 @@ const tl = {
   checkReceived: "Natanggap na ang sagot mo.",
   checkPoints: "{points}/{max} puntos",
 
+  // Learning layer
+  skillPathTitle: "Ang skill path mo",
+  skillPathSkills: "Mga skill para sa job na ito",
+  skillPathStart: "Dito ka magsisimula",
+  skillPathLine: "Hindi lang ito isang task — ito ang unang hakbang.",
+  bonusTitle: "Bonus units (hindi required)",
+  bonusOptional: "Opsyonal",
+  bonusNote: "Hindi nito haharangin ang final test mo at hindi ito dagdag sa oras ng module mo.",
+
   // Course card and the other cards in the same slot
   courseTitle: "Ang kurso mo",
   courseMeta: "~{hours} oras · {count} section",
@@ -282,6 +291,14 @@ const en: Record<StringKey, string> = {
   checkAnswerAll: "Answer all {count} tasks first.",
   checkReceived: "We received your answers.",
   checkPoints: "{points}/{max} points",
+
+  skillPathTitle: "Your skill path",
+  skillPathSkills: "Skills for this job",
+  skillPathStart: "You start here",
+  skillPathLine: "This is not just one task — it is a first step.",
+  bonusTitle: "Bonus units (optional)",
+  bonusOptional: "Optional",
+  bonusNote: "They never block your final test and do not add to your module hours.",
 
   courseTitle: "Your course",
   courseMeta: "~{hours} hours · {count} sections",
