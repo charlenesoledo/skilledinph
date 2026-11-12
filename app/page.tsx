@@ -61,7 +61,7 @@ export default async function Page() {
   return (
     <section className="grid gap-8">
       <div>
-        <h1 className="text-2xl font-bold">Orchestrator Board</h1>
+        <h1 className="text-2xl font-bold">SkilledinPH Board</h1>
         <p className="mt-1 text-muted">Training ends in work, not just a certificate.</p>
         {empty && (
           <p className="mt-2 text-muted">

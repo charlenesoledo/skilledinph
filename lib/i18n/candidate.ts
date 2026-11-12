@@ -10,6 +10,9 @@ export const LOCALES: Locale[] = ["tl", "en"];
 export const DEFAULT_LOCALE: Locale = "tl";
 
 const tl = {
+  // Header: the line under the brand tagline on candidate pages
+  taglineClarifier: "Matuto ng kulang mo. Ipasa ang test ng employer. Sa'yo ang trabaho.",
+
   // Candidate home
   noCandidate: "Walang candidate dito.",
   loadSamples: "I-load ang sample data",
@@ -98,6 +101,8 @@ const tl = {
 export type StringKey = keyof typeof tl;
 
 const en: Record<StringKey, string> = {
+  taglineClarifier: "Learn only what you still need. Pass the employer's test. The job is yours.",
+
   // Candidate home
   noCandidate: "There is no candidate here.",
   loadSamples: "Load the sample data",
