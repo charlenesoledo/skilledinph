@@ -6,6 +6,8 @@ import AuditPanel from "./AuditPanel";
 import SourcesPanel from "@/components/SourcesPanel";
 import PipelineStrip from "@/components/PipelineStrip";
 import KnowledgeBaseCard from "@/components/KnowledgeBaseCard";
+import Link from "next/link";
+import { currentPack } from "@/lib/live/packs";
 import { currentWorkspace } from "@/lib/workspace";
 import TargetBar from "@/components/TargetBar";
 import SkillBars from "@/components/SkillBars";
@@ -26,6 +28,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     .filter((a) => a.job_id === job.id)
     .map((a) => ({ name: candidates.find((c) => c.id === a.candidate_id)?.display_name ?? a.candidate_id, scores: a.score_per_skill }));
   const lastAnalyzer = runs.filter((r) => r.agent === "job_analyzer").at(-1);
+  const live = (await currentWorkspace()) === "live";
+  const pack = live ? await currentPack(job.id) : undefined;
   const band = job.rate_band_demo?.match(/₱(\d+)–₱(\d+)/);
   const suggested = band ? Math.round((Number(band[1]) + Number(band[2])) / 2 / 50) * 50 : undefined;
 
@@ -41,6 +45,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <p className="text-sm text-muted">Job Review</p>
         <h1 className="text-2xl font-bold">{job.title}</h1>
         <p className="mt-1 text-sm"><span className="rounded bg-line px-2 py-1 font-mono text-xs uppercase">{job.status}</span></p>
+        {live && (
+          <Link href={`/employer/jobs/${job.id}/pack`} className="mt-3 inline-block rounded-lg bg-primary px-4 py-2 font-semibold text-white">
+            Assessment Pack{pack ? ` · ${pack.status === "employer_approved" ? "Employer-approved" : "Draft"}` : ""}
+          </Link>
+        )}
       </div>
       <PipelineStrip jobId={job.id} compact />
 
@@ -156,7 +165,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </div>
       </div>
 
-      {(await currentWorkspace()) === "live" && <KnowledgeBaseCard employerId={job.employer_id} />}
+      {live && <KnowledgeBaseCard employerId={job.employer_id} />}
       <SourcesPanel job={job} />
       <ModulePanel job={job} />
       <AuditPanel job={job} />
