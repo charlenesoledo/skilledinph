@@ -7,11 +7,11 @@ export const SAMPLE_JOB_ID = "job_listing_checker";
 
 // Seed assessment scores per candidate, used by the assessment step so sorting is deterministic.
 export const SAMPLE_SCORES: Record<string, Record<string, number>> = {
-  cand_maria: { "Price & Detail Accuracy": 90, "Taglish Tone Judgment": 85, "Reading Comprehension": 90 },
-  cand_jomar: { "Price & Detail Accuracy": 55, "Taglish Tone Judgment": 50, "Reading Comprehension": 80 },
-  cand_rhea: { "Price & Detail Accuracy": 20, "Taglish Tone Judgment": 25, "Reading Comprehension": 40 },
+  cand_maria: { "Price & Detail Accuracy": 90, "Taglish Tone Judgment": 85, "Prompt Judgment": 90 },
+  cand_jomar: { "Price & Detail Accuracy": 55, "Taglish Tone Judgment": 50, "Prompt Judgment": 80 },
+  cand_rhea: { "Price & Detail Accuracy": 20, "Taglish Tone Judgment": 25, "Prompt Judgment": 40 },
   // Optional 4th candidate, used only to prove the seat cap (HR5).
-  cand_paolo: { "Price & Detail Accuracy": 85, "Taglish Tone Judgment": 80, "Reading Comprehension": 75 },
+  cand_paolo: { "Price & Detail Accuracy": 85, "Taglish Tone Judgment": 80, "Prompt Judgment": 75 },
 };
 
 export async function loadSampleData() {

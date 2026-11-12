@@ -13,7 +13,6 @@ const TASKS: Record<string, StringKey> = {
   "Price & Detail Accuracy": "checkTaskPrice",
   "Taglish Tone Judgment": "checkTaskTone",
   "Prompt Judgment": "checkTaskPrompt",
-  "Reading Comprehension": "checkTaskReading",
 };
 
 export default function SkillCheckCard({ skills }: { skills: Row[] }) {

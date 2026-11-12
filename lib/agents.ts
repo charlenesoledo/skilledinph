@@ -49,7 +49,7 @@ const MOCK: { [K in AgentName]: (input: unknown) => AgentOutputs[K] } = {
     skills: [
       { skill: "Price & Detail Accuracy", target: 80, why: "The bad example shows one price in the title and another in the body." },
       { skill: "Taglish Tone Judgment", target: 75, why: "The bad example uses a stiff English reply." },
-      { skill: "Reading Comprehension", target: 70, why: "The checker must read the whole listing and message to catch both." },
+      { skill: "Prompt Judgment", target: 70, why: "The checker must judge whether an instruction to the AI is clear enough to get a correct draft." },
     ],
     rubric: [
       "Price matches in the title, body, and variant",

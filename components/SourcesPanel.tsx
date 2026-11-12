@@ -1,3 +1,4 @@
+import { CircleCheck } from "lucide-react";
 import { lookupBand } from "@/lib/rate-table";
 import type { Job } from "@/lib/types";
 
@@ -34,7 +35,6 @@ const CHECK_TASKS: Record<string, string> = {
   "Price & Detail Accuracy": "Check a sample listing whose price, size, and delivery fee contain errors. Find them.",
   "Taglish Tone Judgment": "Choose the reply a friendly seller would send to an unhappy buyer (3 choices).",
   "Prompt Judgment": "Pick the clearest instruction to give an AI helper for writing a product description (3 choices).",
-  "Reading Comprehension": "Read a buyer's question and choose whether the draft reply answers everything asked (3 choices).",
 };
 
 // Five illustrative scanned rates spread across the reference band.
@@ -92,6 +92,10 @@ export default function SourcesPanel({ job }: { job: Job }) {
             </tbody>
           </table>
           <p className="text-xs text-muted">Band = middle range of scanned rates.</p>
+          <p className="flex gap-1.5 text-xs">
+            <CircleCheck aria-hidden className="h-3.5 w-3.5 shrink-0 text-primary" />
+            <span><b>Wage floor check ✓</b> — employment-type roles are checked against the regional minimum wage; below-floor rates are blocked.</span>
+          </p>
         </SourceCard>
 
         <SourceCard n={4} title="Candidate skill check">

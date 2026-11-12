@@ -4,7 +4,7 @@
 import type { KeyedItem } from "./types";
 
 type SectionDraft = { skill: string; title: string; lesson_text: string; worked_example: string; practice_items: KeyedItem[] };
-const P = "Price & Detail Accuracy", T = "Taglish Tone Judgment", R = "Reading Comprehension";
+const P = "Price & Detail Accuracy", T = "Taglish Tone Judgment", R = "Prompt Judgment";
 
 export const SAMPLE_MODULE: {
   sections: SectionDraft[]; final_test: { items: KeyedItem[]; rubric: string[] }; proposed_passing_score: number;

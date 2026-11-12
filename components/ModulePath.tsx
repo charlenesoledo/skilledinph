@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useLayoutEffect, useRef } from "react";
 import { animate, useReducedMotion } from "motion/react";
 import { DUR_PROGRESS, EASE_ENTER } from "@/lib/motion";
-import { useT } from "./Locale";
+import { useLocale, useT } from "./Locale";
+import { SECTION_EN } from "@/lib/i18n/sections";
 import { BookOpen, Check, FileCheck, Lock } from "lucide-react";
 import { SkillLabel } from "./CandidateIcons";
 
@@ -71,6 +72,8 @@ export default function ModulePath({
   totalHours: number; finished?: boolean; // finished: the final test is passed and the offer is made
 }) {
   const t = useT();
+  const { locale } = useLocale();
+  const tr = (text: string) => (locale === "en" ? SECTION_EN[text] ?? text : text);
   const nextIndex = sections.findIndex((s) => !s.done); // -1: all sections done, so the test is next
   const doneCount = sections.filter((s) => s.done).length;
   return (
@@ -96,8 +99,8 @@ export default function ModulePath({
                 </span>
               )}
               <p className="text-sm text-muted"><SkillLabel skill={s.skill} /></p>
-              <p className="font-semibold">{i + 1}. {s.title}</p>
-              <p className="mt-1 text-sm">{s.summary}</p>
+              <p className="font-semibold">{i + 1}. {tr(s.title)}</p>
+              <p className="mt-1 text-sm">{tr(s.summary)}</p>
               <p className="mt-2 text-sm text-muted tabular-nums">
                 {t("courseParts", { n: s.practiceCount })}
                 {s.minutes ? ` · ${t("courseMinutes", { min: s.minutes })}` : ""}

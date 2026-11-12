@@ -10,8 +10,8 @@ export const SAMPLE_ASSESSMENT_ITEMS: KeyedItem[] = [
     choices: ["Affirmative. The said item remains in stock.", "Yes po, available pa! Ilan po ang kukunin n'yo?"], correct_index: 1 },
   { skill: "Taglish Tone Judgment", prompt: "Alin sa mga reply ang dapat ipaayos?",
     choices: ["Salamat po sa order! Ipapadala namin bukas.", "Kindly be advised that your parcel shall be dispatched."], correct_index: 1 },
-  { skill: "Reading Comprehension", prompt: 'Customer: "Pwede po bang COD?" Draft: "Yes po, pwede ang COD." Sinagot ba ang tanong?',
+  { skill: "Prompt Judgment", prompt: 'Customer: "Pwede po bang COD?" Draft: "Yes po, pwede ang COD." Sinagot ba ang tanong?',
     choices: ["Oo, i-approve", "Hindi, ipaayos"], correct_index: 0 },
-  { skill: "Reading Comprehension", prompt: 'Customer: "May gray po ba at kasya sa 40cm na drawer?" Draft: "Meron po kaming gray!" Ano ang kulang?',
+  { skill: "Prompt Judgment", prompt: 'Customer: "May gray po ba at kasya sa 40cm na drawer?" Draft: "Meron po kaming gray!" Ano ang kulang?',
     choices: ["Walang kulang", "Hindi nasagot ang sukat", "Hindi nasagot ang kulay"], correct_index: 1 },
 ];

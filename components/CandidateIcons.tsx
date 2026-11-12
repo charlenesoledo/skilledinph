@@ -1,5 +1,5 @@
 import {
-  BadgeCheck, BookOpen, Check, ClipboardList, Clock, FileCheck, FileSearch, GraduationCap, Hourglass, Lock,
+  BadgeCheck, BookOpen, Check, ClipboardList, Clock, FileCheck, GraduationCap, Hourglass, Lock,
   MessageCircle, Minus, ShieldCheck, Tag, Target, type LucideIcon,
 } from "lucide-react";
 
@@ -7,7 +7,6 @@ import {
 const SKILL_ICONS: Record<string, LucideIcon> = {
   "Price & Detail Accuracy": Tag,
   "Taglish Tone Judgment": MessageCircle,
-  "Reading Comprehension": FileSearch,
   "Prompt Judgment": Target,
 };
 

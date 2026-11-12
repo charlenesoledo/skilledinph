@@ -9,6 +9,7 @@ import TargetBar from "@/components/TargetBar";
 import SkillBars from "@/components/SkillBars";
 import AgentRunButton from "@/components/AgentRunButton";
 import { runState } from "@/lib/runs";
+import { CircleCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -123,6 +124,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                   <p className="text-sm text-muted">Confirmed rate</p>
                   <p className="big-number mt-1 text-primary">₱{job.pay_confirmed}<span className="ml-1 font-sans text-base font-normal text-muted">/day</span></p>
                   <p className="mt-2 text-sm">Confirmed at ₱{job.pay_confirmed}/day. Candidates see this rate before they start training.</p>
+                  {/* Display only: no computation, nothing is blocked in the demo flow. */}
+                  <p className="mt-3 flex gap-2 text-sm">
+                    <CircleCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span>
+                      <b>Wage Floor Check ✓</b> — This role is online and output-based, so its rate comes from market listings. For
+                      employment-type roles, the agent checks the regional minimum wage (for example, NCR ₱718–₱755/day) and blocks any
+                      confirmed rate below that floor before training starts.
+                    </span>
+                  </p>
                 </div>
               ) : (
                 <>
