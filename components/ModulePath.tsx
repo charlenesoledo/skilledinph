@@ -5,6 +5,8 @@ import { useLayoutEffect, useRef } from "react";
 import { animate, useReducedMotion } from "motion/react";
 import { DUR_PROGRESS, EASE_ENTER } from "@/lib/motion";
 import { useT } from "./Locale";
+import { Check, FileCheck, Lock } from "lucide-react";
+import { SkillLabel } from "./CandidateIcons";
 
 export type PathSection = { id: string; skill: string; title: string; done: boolean; hours: number | null; href: string };
 
@@ -44,7 +46,7 @@ export function PathProgress({ planId, step, total, done, sectionsDone, sections
     return () => controls.stop();
   }, [planId, target, record, reduce]);
   return (
-    <div className="sticky top-0 z-10 -mx-5 border-b border-line bg-card/95 px-5 py-3">
+    <div className="sticky top-0 z-20 -mx-6 border-b border-line bg-card/95 px-6 py-3">
       <div className="flex items-baseline justify-between gap-3">
         <p className="font-display text-lg font-bold tabular-nums">{t("step", { x: step, y: total })}</p>
         <p className="text-sm text-muted tabular-nums">{t("sectionsDone", { done: sectionsDone, total: sectionsTotal })}</p>
@@ -74,25 +76,27 @@ export default function ModulePath({
           return (
             <Node key={s.id} state={state} last={false}>
               {state === "locked" ? (
-                <div className="rounded-xl border border-line p-4 text-muted">
-                  <p className="font-semibold">{s.skill}</p>
-                  <p className="mt-1 text-base">{t("locked")}</p>
+                <div className="rounded-xl border border-line p-5 text-muted">
+                  <p className="font-semibold"><SkillLabel skill={s.skill} /></p>
+                  <p className="mt-1 flex items-center gap-1.5 text-base"><Lock aria-hidden className="h-4 w-4 shrink-0" />{t("locked")}</p>
                 </div>
               ) : (
                 <Link
                   href={s.href}
-                  className={`card card-hover block p-4 ${state === "next" ? "border-2 border-primary" : "hover:border-muted"}`}
+                  className={`card card-hover block p-5 ${state === "next" ? "border-2 border-primary" : "hover:border-muted"}`}
                 >
                   {state === "next" && (
                     <span className="mb-2 inline-block rounded-full bg-primary px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
                       {t("next")}
                     </span>
                   )}
-                  <p className="text-sm text-muted">{s.skill}</p>
+                  <p className="text-sm text-muted"><SkillLabel skill={s.skill} /></p>
                   <p className="font-semibold">{s.title}</p>
                   <p className="mt-1 text-base text-muted">
                     {s.hours ? `${t("hours", { hours: s.hours })} · ` : `${t("practice")} · `}
-                    {s.done ? t("done") : retry ? t("practiceAgain") : t("open")}
+                    {s.done ? (
+                      <span className="inline-flex items-center gap-1 font-semibold text-primary"><Check aria-hidden className="h-4 w-4" strokeWidth={2.5} />{t("done").replace(/\s*✓$/, "")}</span>
+                    ) : retry ? t("practiceAgain") : t("open")}
                   </p>
                 </Link>
               )}
@@ -101,12 +105,12 @@ export default function ModulePath({
         })}
         <Node state={testUnlocked ? "next" : "locked"} last>
           {testUnlocked ? (
-            <Link href={testHref} className="block w-full rounded-xl bg-primary px-4 py-4 text-center text-lg font-semibold text-white">
-              {retake ? t("retakeTest") : t("startTest")}
+            <Link href={testHref} className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-4 text-center text-lg font-semibold text-white">
+              <FileCheck aria-hidden className="h-5 w-5 shrink-0" />{retake ? t("retakeTest") : t("startTest")}
             </Link>
           ) : (
-            <button disabled className="block w-full cursor-not-allowed rounded-xl bg-line px-4 py-4 text-center text-lg font-semibold text-muted">
-              {t("testLocked", { left: sections.length - doneCount })}
+            <button disabled className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-line px-4 py-4 text-center text-lg font-semibold text-muted">
+              <Lock aria-hidden className="h-5 w-5 shrink-0" />{t("testLocked", { left: sections.length - doneCount })}
             </button>
           )}
         </Node>
@@ -126,16 +130,11 @@ function Node({ state, last, children }: { state: "done" | "next" | "locked"; la
         }`}
       >
         {state === "done" ? (
-          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3.5 8.5l3 3 6-7" />
-          </svg>
+          <Check className="h-3.5 w-3.5" strokeWidth={3} />
         ) : state === "next" ? (
           <span className="h-2.5 w-2.5 rounded-full bg-primary" />
         ) : (
-          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3.5" y="7" width="9" height="6.5" rx="1" />
-            <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
-          </svg>
+          <Lock className="h-3.5 w-3.5" strokeWidth={2} />
         )}
       </span>
       <div className="min-w-0">{children}</div>

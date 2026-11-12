@@ -6,6 +6,7 @@ import { useCountUp } from "./useCountUp";
 import { COUNT_REVEAL_MS, DUR_MED, EASE_ENTER } from "@/lib/motion";
 import { useT } from "./Locale";
 import type { StringKey, Values } from "@/lib/i18n/candidate";
+import { BadgeCheck, Building2, Check } from "lucide-react";
 
 type Common = {
   employerName: string;
@@ -32,21 +33,24 @@ export type OfferPromiseProps =
 export default function OfferPromise(props: OfferPromiseProps) {
   const t = useT();
   const final = props.kind === "final";
+  // One reveal decision per offer, shared by the headline and the body.
+  const reduce = useReducedMotion();
+  const first = useFirstReveal(final ? props.offerId : null);
+  const reveal = { first, animate: first === true && !reduce };
   return (
-    <div className={`grid gap-3 rounded-2xl bg-card p-5 ${final ? "border-2 border-dashed border-ink" : "border border-line shadow-card"}`}>
+    <div className={`grid gap-3 rounded-2xl bg-card p-6 ${final ? "border-2 border-dashed border-ink" : "border border-line shadow-card"}`}>
+      {final && <FinalHeadline {...props} t={t} {...reveal} />}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-semibold text-ink">{props.employerName}</span>
+        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink"><Building2 aria-hidden className="h-4 w-4 shrink-0" />{props.employerName}</span>
         {props.verified && (
           <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary" title={t("verifiedHint")}>
-            <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M3.5 8.5l3 3 6-7" />
-            </svg>
+            <Check aria-hidden className="h-3 w-3" strokeWidth={3} />
             {t("verified")}
             <span className="sr-only">: {t("verifiedHint")}</span>
           </span>
         )}
       </div>
-      {final ? <FinalBody {...props} t={t} /> : <PromiseBody {...props} t={t} />}
+      {final ? <FinalBody {...props} t={t} {...reveal} /> : <PromiseBody {...props} t={t} />}
       <p className="text-sm text-muted">{t("noFees")}</p>
     </div>
   );
@@ -63,19 +67,21 @@ function PromiseBody(p: Extract<OfferPromiseProps, { kind: "promise" }> & { t: T
         {t("payPerDay", { pay: p.pay })}
         {p.start && <span className="font-normal text-muted"> · {t("startsOn", { date: p.start })}</span>}
       </p>
-      <p className="rounded-xl bg-primary/10 p-3 text-base font-semibold text-primary">
-        {p.seatHeld ? t("guarantee", { employer: p.employerName }) : t("seatsFullNote")}
+      <p className="flex gap-2 rounded-xl bg-primary/10 p-4 text-base font-semibold text-primary">
+        <BadgeCheck aria-hidden className="mt-0.5 h-5 w-5 shrink-0" />
+        <span>{p.seatHeld ? t("guarantee", { employer: p.employerName }) : t("seatsFullNote")}</span>
       </p>
     </>
   );
 }
 
 // The reveal plays once per offer in this browser; later visits show the final state at once.
-function useFirstReveal(offerId: string) {
+function useFirstReveal(offerId: string | null) {
   const [first, setFirst] = useState<boolean | null>(null);
   // Decided once per offer per mount; a repeated effect run (React dev mode) reuses the answer.
   const decided = useRef<{ offerId: string; first: boolean } | null>(null);
   useEffect(() => {
+    if (offerId === null) return;
     if (decided.current?.offerId !== offerId) {
       const key = `orchestrator:offer-revealed:${offerId}`;
       let seen = false;
@@ -90,32 +96,40 @@ function useFirstReveal(offerId: string) {
   return first;
 }
 
-function FinalBody(p: Extract<OfferPromiseProps, { kind: "final" }> & { t: T }) {
-  const { t } = p;
-  const reduce = useReducedMotion();
-  const first = useFirstReveal(p.offerId);
-  const animate = first === true && !reduce;
+type FinalProps = Extract<OfferPromiseProps, { kind: "final" }> & { t: T; first: boolean | null; animate: boolean };
+
+// Headline of the offer card: the stamp, large, then the pay once, large, under it.
+function FinalHeadline(p: FinalProps) {
+  const { t, first, animate } = p;
   const shownPay = useCountUp(p.pay, animate ? COUNT_REVEAL_MS : 0);
-  const shownSeats = useCountUp(p.seatsTaken, animate ? COUNT_REVEAL_MS : 0);
   return (
-    <>
+    <div className="grid justify-items-start gap-3">
       <motion.span
         key={String(first)}
         initial={animate ? { scale: 1.6, rotate: 0, opacity: 0 } : false}
-        animate={{ scale: 1, rotate: -8, opacity: 1 }}
+        animate={{ scale: 1, rotate: -6, opacity: 1 }}
         transition={{ duration: DUR_MED, ease: EASE_ENTER }}
-        className={`w-fit origin-left rounded-md border-2 px-3 py-2 font-display text-base font-bold tracking-[0.18em] ${
+        className={`origin-left rounded-lg border-[3px] px-5 py-3 font-display text-2xl font-bold tracking-[0.18em] ${
           p.guaranteed ? "border-ink bg-accent text-ink" : "border-muted bg-line text-ink"
         }`}
       >
         {p.guaranteed ? t("stampGuaranteed") : t("stampWaitlist")}
       </motion.span>
-      <p className="text-sm text-muted">{p.guaranteed ? t("jobOfferFrom", { employer: p.employerName }) : t("waitlistFrom", { employer: p.employerName })}</p>
-      <p className="text-xl font-bold">{p.jobTitle}</p>
       <p className="big-number" aria-label={t("payLabel", { pay: p.pay })}>
         ₱{first === null ? p.pay : shownPay}
         <span className="ml-1 font-sans text-base font-normal text-muted">{t("perDay")}</span>
       </p>
+    </div>
+  );
+}
+
+function FinalBody(p: FinalProps) {
+  const { t, first, animate } = p;
+  const shownSeats = useCountUp(p.seatsTaken, animate ? COUNT_REVEAL_MS : 0);
+  return (
+    <>
+      <p className="text-sm text-muted">{p.guaranteed ? t("jobOfferFrom", { employer: p.employerName }) : t("waitlistFrom", { employer: p.employerName })}</p>
+      <p className="text-xl font-bold">{p.jobTitle}</p>
       {p.start && <p className="text-base">{t("start", { date: p.start })}</p>}
       <p className="flex items-baseline gap-2 text-base" aria-label={t("slotsFilledLabel", { taken: p.seatsTaken, slots: p.slots })}>
         <span className="font-display text-2xl font-bold tabular-nums">

@@ -10,6 +10,7 @@ import CandidateCardBody from "@/components/CandidateCard";
 import { candidateCard, candidateStage } from "@/lib/stages";
 import { currentModule } from "@/lib/modules";
 import type { Module } from "@/lib/types";
+import { OFFER_ICONS, SORT_ICONS } from "@/components/CandidateIcons";
 
 export const dynamic = "force-dynamic";
 
@@ -65,16 +66,31 @@ export default async function Page() {
                         {jobs.length > 1 && <p className="mb-2 font-medium">{j.title}</p>}
                         {a ? (
                           <>
+                            {/* The offer badge has its own row, so it sits in the same place on every card. */}
+                            {o && (() => {
+                              const Icon = o.guaranteed ? OFFER_ICONS.guaranteed : OFFER_ICONS.waitlist;
+                              return (
+                                <p className="mb-2">
+                                  <span className={`inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs font-semibold ${o.guaranteed ? "bg-accent text-ink" : "bg-line text-muted"}`}>
+                                    <Icon aria-hidden className="h-3.5 w-3.5" strokeWidth={2.25} />
+                                    {o.guaranteed ? `GUARANTEED · ${o.status}` : "WAITLIST · NOT GUARANTEED"}
+                                  </span>
+                                </p>
+                              );
+                            })()}
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className={`rounded px-2 py-1 text-xs font-semibold ${SORT_STYLE[a.sorting]}`}>{SORT_LABEL[a.sorting]}</span>
+                              {(() => {
+                                const Icon = SORT_ICONS[a.sorting];
+                                return (
+                                  <span className={`inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs font-semibold ${SORT_STYLE[a.sorting]}`}>
+                                    <Icon aria-hidden className="h-3.5 w-3.5" strokeWidth={2.25} />
+                                    {SORT_LABEL[a.sorting]}
+                                  </span>
+                                );
+                              })()}
                               <span className="tabular-nums text-muted">
                                 {a.total_gap_hours === 0 ? "no gap" : `gap ~${a.total_gap_hours} hours`}
                               </span>
-                              {o && (
-                                <span className={`rounded px-2 py-1 text-xs font-semibold ${o.guaranteed ? "bg-accent text-ink" : "bg-line text-muted"}`}>
-                                  {o.guaranteed ? `GUARANTEED · ${o.status}` : "WAITLIST · NOT GUARANTEED"}
-                                </span>
-                              )}
                             </div>
                             <SkillBars
                               skills={j.target_skills.map((s) => ({ label: s.skill.split(" ")[0], score: a.score_per_skill[s.skill] ?? 0, target: s.target }))}

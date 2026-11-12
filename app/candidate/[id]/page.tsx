@@ -9,11 +9,31 @@ import { T } from "@/components/Locale";
 import OfferPromise from "@/components/OfferPromise";
 import ModulePath, { PathProgress } from "@/components/ModulePath";
 import { pathStep } from "@/lib/path";
+import SunBand from "@/components/SunBand";
+import Journey, { type JourneyStep, type StepState } from "@/components/Journey";
+import { SkillLabel, BadgeCheck, BookOpen, Check, Clock, FileCheck, Hourglass, Lock, Target } from "@/components/CandidateIcons";
+import { Briefcase, ClipboardCheck, Lightbulb } from "lucide-react";
 import { acceptOffer, completeSection, startPlan, submitTest } from "../actions";
 
 export const dynamic = "force-dynamic";
 
 const big = "block w-full rounded-xl px-4 py-4 text-center text-lg font-semibold";
+const ico = "h-5 w-5 shrink-0";
+
+// Where this candidate is on the five-step journey for one job. Display only: read from existing state.
+function journeyStates(o: {
+  assessed: boolean; sorting?: string; plan: boolean; testUnlocked: boolean; offer: boolean;
+}): Record<JourneyStep, StepState> {
+  const order: JourneyStep[] = ["assessment", "gap", "module", "test", "offer"];
+  const states = (current: number, skipped: JourneyStep[] = []) =>
+    Object.fromEntries(order.map((s, i) => [s, skipped.includes(s) ? "skipped" : i < current ? "done" : i === current ? "current" : "upcoming"])) as Record<JourneyStep, StepState>;
+  const trained = o.plan;
+  if (o.offer) return states(5, trained ? [] : ["gap", "module", "test"]);
+  if (!o.assessed) return states(0);
+  if (o.sorting === "ready") return states(4, ["gap", "module", "test"]);
+  if (!o.plan) return states(1);
+  return states(o.testUnlocked ? 3 : 2);
+}
 
 export default async function Page({
   params, searchParams,
@@ -47,24 +67,24 @@ export default async function Page({
           const assigned = mod.sections.filter((s) => plan.assigned_sections.includes(s.id));
           const p = pathStep(assigned.map((s) => !!plan.progress[s.id]));
           return (
-            <div className="sticky top-0 z-10 card overflow-hidden px-5">
+            <div className="sticky top-0 z-10 card overflow-hidden px-6">
               <PathProgress planId={plan.id} step={p.step} total={p.total} done={p.done} sectionsDone={p.done} sectionsTotal={assigned.length} record={false} />
             </div>
           );
         })()}
         <Link href={home} className="text-base font-semibold underline"><T k="backToModule" /></Link>
         <div>
-          <p className="text-sm text-muted">{section.skill}</p>
+          <p className="text-sm text-muted"><SkillLabel skill={section.skill} /></p>
           <h1 className="text-2xl font-bold">{section.title}</h1>
         </div>
         <p>{section.lesson_text}</p>
-        <div className="rounded-xl bg-paper p-4">
-          <p className="font-bold"><T k="example" /></p>
+        <div className="rounded-xl bg-paper p-5">
+          <p className="flex items-center gap-2 font-bold"><Lightbulb aria-hidden className={ico} /><T k="example" /></p>
           <p className="mt-1">{section.worked_example}</p>
         </div>
         <Practice items={section.practice_items} />
         {plan.progress[section.id] ? (
-          <p className="rounded-xl bg-primary/10 p-4 font-semibold text-primary"><T k="sectionDone" /></p>
+          <p className="flex items-center gap-2 rounded-xl bg-primary/10 p-5 font-semibold text-primary"><Check aria-hidden className={ico} /><T k="sectionDone" /></p>
         ) : (
           <form action={completeSection.bind(null, plan.id, section.id)}>
             <button className={`${big} bg-primary text-white`}><T k="finishSection" /></button>
@@ -85,14 +105,14 @@ export default async function Page({
       <section className="mx-auto grid max-w-[480px] gap-5 text-lg">
         <Link href={home} className="text-base font-semibold underline"><T k="back" /></Link>
         <div>
-          <h1 className="text-2xl font-bold"><T k="finalTest" /></h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold"><FileCheck aria-hidden className="h-6 w-6 shrink-0 text-primary" /><T k="finalTest" /></h1>
           <p className="mt-1 text-base text-muted">
             <T k="testIntro" v={{ count: mod.final_test.items.length, pass: mod.passing_score }} />
           </p>
         </div>
         <form action={submitTest.bind(null, plan.id)} className="grid gap-5">
           {mod.final_test.items.map((it, i) => (
-            <fieldset key={i} className="grid gap-2 card p-4">
+            <fieldset key={i} className="grid gap-2 card p-5">
               <legend className="sr-only"><T k="questionN" v={{ n: i + 1 }} /></legend>
               <p>{i + 1}. {it.prompt}</p>
               {it.choices.map((c, n) => (
@@ -135,20 +155,28 @@ export default async function Page({
 
         const progress = plan && !offer && !outOfTries ? pathStep(sections.map((s) => !!plan.progress[s.id])) : null;
         return (
-          <div key={job.id} className="grid gap-4 card p-5">
+          <div key={job.id} className="grid gap-5 card p-6">
+            <SunBand />
             {/* While training, progress stays pinned at the top of the card. */}
             {plan && progress && (
-              <div className="-mt-5">
-                <PathProgress planId={plan.id} step={progress.step} total={progress.total} done={progress.done}
-                  sectionsDone={progress.done} sectionsTotal={sections.length} />
-              </div>
+              <PathProgress planId={plan.id} step={progress.step} total={progress.total} done={progress.done}
+                sectionsDone={progress.done} sectionsTotal={sections.length} />
             )}
             <div>
-              <p className="text-sm text-muted">{employer?.name}</p>
+              <p className="flex items-center gap-1.5 text-sm text-muted"><Briefcase aria-hidden className="h-4 w-4 shrink-0" />{employer?.name}</p>
               <h2 className="text-xl font-bold">{job.title}</h2>
-              <p className="mt-3 text-sm text-muted"><T k="pay" /></p>
-              <p className="big-number">₱{job.pay_confirmed}<span className="ml-1 font-sans text-base font-normal text-muted"><T k="perDayLong" /></span></p>
+              {/* Once there is an offer, the pay shows once, under the stamp on the offer card. */}
+              {!offer && (
+                <>
+                  <p className="mt-3 text-sm text-muted"><T k="pay" /></p>
+                  <p className="big-number">₱{job.pay_confirmed}<span className="ml-1 font-sans text-base font-normal text-muted"><T k="perDayLong" /></span></p>
+                </>
+              )}
             </div>
+
+            {a?.sorting !== "not_yet" && (
+              <Journey states={journeyStates({ assessed: !!a, sorting: a?.sorting, plan: !!plan, testUnlocked: unlocked, offer: !!offer })} />
+            )}
 
             {/* The Offer Promise, from assessment onward. Not shown on the foundational track, where this job has no offer path. */}
             {!offer && a && a.sorting !== "not_yet" && (
@@ -174,11 +202,12 @@ export default async function Page({
                   </form>
                 )}
                 {offer.status === "accepted" && (
-                  <p className="rounded-xl bg-primary/10 p-4 font-semibold text-primary"><T k="accepted" /></p>
+                  <p className="flex items-center gap-2 rounded-xl bg-primary/10 p-5 font-semibold text-primary"><BadgeCheck aria-hidden className={ico} /><T k="accepted" /></p>
                 )}
                 {offer.status === "waitlisted" && (
-                  <p className="rounded-xl bg-paper p-4 text-base">
-                    <T k="waitlistNote" v={{ slots: job.reserved_slots }} />
+                  <p className="flex gap-2 rounded-xl bg-paper p-5 text-base">
+                    <Hourglass aria-hidden className={`${ico} mt-0.5`} />
+                    <span><T k="waitlistNote" v={{ slots: job.reserved_slots }} /></span>
                   </p>
                 )}
               </>
@@ -187,8 +216,8 @@ export default async function Page({
             {!offer && !a && <p className="text-muted"><T k="noAssessment" /></p>}
 
             {!offer && a?.sorting === "ready" && (
-              <div className="rounded-xl bg-primary/10 p-4">
-                <p className="font-bold text-primary"><T k="ready" /></p>
+              <div className="rounded-xl bg-primary/10 p-5">
+                <p className="flex items-center gap-2 font-bold text-primary"><BadgeCheck aria-hidden className={ico} /><T k="ready" /></p>
                 <p className="mt-1 text-base"><T k="readyBody" /></p>
               </div>
             )}
@@ -196,7 +225,7 @@ export default async function Page({
             {!offer && a?.sorting === "trainable" && gap && (
               <>
                 <div>
-                  <h3 className="font-bold"><T k="yourGap" /></h3>
+                  <h3 className="flex items-center gap-2 font-bold"><Target aria-hidden className={`${ico} text-primary`} /><T k="yourGap" /></h3>
                   <ul className="mt-2 grid gap-3 text-base">
                     {Object.entries(gap.per).map(([skill, hours]) => {
                       const target = job.target_skills.find((s) => s.skill === skill)!.target;
@@ -204,7 +233,7 @@ export default async function Page({
                       return (
                         <li key={skill}>
                           <div className="flex justify-between gap-3">
-                            <span>{skill}</span>
+                            <SkillLabel skill={skill} />
                             <span className="shrink-0 tabular-nums text-muted">{level} → {target} · {hours}h</span>
                           </div>
                           <div className="mt-1 h-2 overflow-hidden rounded bg-line">
@@ -215,11 +244,11 @@ export default async function Page({
                     })}
                   </ul>
                 </div>
-                <p className="text-xl font-bold"><T k="yourModule" v={{ hours: plan ? plan.personal_hours : gap.total }} /></p>
+                <p className="flex items-center gap-2 text-xl font-bold"><BookOpen aria-hidden className={`${ico} text-primary`} /><T k="yourModule" v={{ hours: plan ? plan.personal_hours : gap.total }} /></p>
 
                 {!plan && !moduleOpen(mod) && (
-                  <div className="rounded-xl bg-accent/20 p-4 text-base">
-                    <p className="font-bold text-ink"><T k="moduleLocked" /></p>
+                  <div className="rounded-xl bg-accent/20 p-5 text-base">
+                    <p className="flex items-center gap-2 font-bold text-ink"><Lock aria-hidden className={ico} /><T k="moduleLocked" /></p>
                     <p className="mt-1"><T k="moduleLockedBody" /></p>
                   </div>
                 )}
@@ -236,8 +265,8 @@ export default async function Page({
                 )}
 
                 {plan && last && !last.passed && (
-                  <div className="rounded-xl bg-paper p-4 text-base">
-                    <p className="text-sm font-semibold text-muted"><T k="result" /></p>
+                  <div className="rounded-xl bg-paper p-5 text-base">
+                    <p className="flex items-center gap-1.5 text-sm font-semibold text-muted"><ClipboardCheck aria-hidden className="h-4 w-4 shrink-0" /><T k="result" /></p>
                     <p className="big-number mt-1">{last.score}<span className="ml-2 font-sans text-base font-normal text-muted"><T k="passMarkShort" v={{ pass: planModule?.passing_score ?? "" }} /></span></p>
                     <p className="mt-1">{last.scored_output.explanation ?? <T k="resultSaved" />}</p>
                   </div>
@@ -259,8 +288,8 @@ export default async function Page({
             )}
 
             {a?.sorting === "not_yet" && gap && (
-              <div className="rounded-xl bg-paper p-4 text-base">
-                <p className="text-lg font-bold text-primary"><T k="notYetTitle" /></p>
+              <div className="rounded-xl bg-paper p-5 text-base">
+                <p className="flex items-center gap-2 text-lg font-bold text-primary"><Clock aria-hidden className={ico} /><T k="notYetTitle" /></p>
                 <p className="mt-1">
                   <T k="notYetLead" v={{ hours: gap.total }} />{" "}<b><T k="notYetTrack" /></b><T k="notYetTail" />
                 </p>

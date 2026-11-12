@@ -13,6 +13,16 @@ const tl = {
   // Header: the line under the brand tagline on candidate pages
   taglineClarifier: "Matuto ng kulang mo. Ipasa ang test ng employer. Sa'yo ang trabaho.",
 
+  // Journey steps
+  journeyLabel: "Ang daan mo papunta sa trabaho",
+  journeyAssessment: "Assessment",
+  journeyGap: "Ang kulang mo",
+  journeyModule: "Module",
+  journeyTest: "Final test",
+  journeyOffer: "Offer",
+  journeySkipped: "hindi na kailangan",
+  journeyDone: "tapos na",
+
   // Candidate home
   noCandidate: "Walang candidate dito.",
   loadSamples: "I-load ang sample data",
@@ -102,6 +112,15 @@ export type StringKey = keyof typeof tl;
 
 const en: Record<StringKey, string> = {
   taglineClarifier: "Learn only what you still need. Pass the employer's test. The job is yours.",
+
+  journeyLabel: "Your path to the job",
+  journeyAssessment: "Assessment",
+  journeyGap: "Your gap",
+  journeyModule: "Module",
+  journeyTest: "Final test",
+  journeyOffer: "Offer",
+  journeySkipped: "not needed",
+  journeyDone: "done",
 
   // Candidate home
   noCandidate: "There is no candidate here.",
