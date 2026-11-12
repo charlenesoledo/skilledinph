@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useCountUp } from "./useCountUp";
 import { COUNT_REVEAL_MS, DUR_MED, EASE_ENTER } from "@/lib/motion";
@@ -72,14 +72,19 @@ function PromiseBody(p: Extract<OfferPromiseProps, { kind: "promise" }> & { t: T
 // The reveal plays once per offer in this browser; later visits show the final state at once.
 function useFirstReveal(offerId: string) {
   const [first, setFirst] = useState<boolean | null>(null);
+  // Decided once per offer per mount; a repeated effect run (React dev mode) reuses the answer.
+  const decided = useRef<{ offerId: string; first: boolean } | null>(null);
   useEffect(() => {
-    const key = `orchestrator:offer-revealed:${offerId}`;
-    let seen = false;
-    try {
-      seen = localStorage.getItem(key) === "1";
-      localStorage.setItem(key, "1");
-    } catch {}
-    setFirst(!seen);
+    if (decided.current?.offerId !== offerId) {
+      const key = `orchestrator:offer-revealed:${offerId}`;
+      let seen = false;
+      try {
+        seen = localStorage.getItem(key) === "1";
+        localStorage.setItem(key, "1");
+      } catch {}
+      decided.current = { offerId, first: !seen };
+    }
+    setFirst(decided.current.first);
   }, [offerId]);
   return first;
 }
