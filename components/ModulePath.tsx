@@ -5,10 +5,13 @@ import { useLayoutEffect, useRef } from "react";
 import { animate, useReducedMotion } from "motion/react";
 import { DUR_PROGRESS, EASE_ENTER } from "@/lib/motion";
 import { useT } from "./Locale";
-import { Check, FileCheck, Lock } from "lucide-react";
+import { BookOpen, Check, FileCheck, Lock } from "lucide-react";
 import { SkillLabel } from "./CandidateIcons";
 
-export type PathSection = { id: string; skill: string; title: string; done: boolean; hours: number | null; href: string };
+export type PathSection = {
+  id: string; skill: string; title: string; done: boolean; hours: number | null; href: string;
+  summary: string; practiceCount: number; minutes: number | null;
+};
 
 // Shared progress header: "Step X of Y" in words and numbers, and a bar that animates (350ms) when it changes.
 // It sticks to the top of the screen while the candidate scrolls.
@@ -58,26 +61,54 @@ export function PathProgress({ planId, step, total, done, sectionsDone, sections
   );
 }
 
-// The module as one vertical path: finished steps ticked, exactly one "Next" step, later steps locked
-// and named by the job task they teach. The final test is the last step.
+// The module as a course: a header with total hours, section count and progress, then one row per section
+// (number, title, one-line summary, what it contains, minutes, status). Finished rows are ticked, exactly one
+// is "Next", later ones are locked. The final test is the last row and unlocks exactly as before.
 export default function ModulePath({
-  sections, retry, testUnlocked, testHref, retake,
+  sections, retry, testUnlocked, testHref, retake, totalHours, finished = false,
 }: {
   sections: PathSection[]; retry: boolean; testUnlocked: boolean; testHref: string; retake: boolean;
+  totalHours: number; finished?: boolean; // finished: the final test is passed and the offer is made
 }) {
   const t = useT();
   const nextIndex = sections.findIndex((s) => !s.done); // -1: all sections done, so the test is next
   const doneCount = sections.filter((s) => s.done).length;
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-4 rounded-xl border border-line p-5">
+      <div className="grid gap-2">
+        <h3 className="flex items-center gap-2 text-lg font-bold"><BookOpen aria-hidden className="h-5 w-5 shrink-0 text-primary" />{t("courseTitle")}</h3>
+        <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm text-muted tabular-nums">
+          <span>{t("courseMeta", { hours: totalHours, count: sections.length })}</span>
+          <span>{t("courseProgress", { done: doneCount, total: sections.length })}</span>
+        </div>
+        <span className="block h-2 overflow-hidden rounded-full bg-line" aria-hidden>
+          <span className="block h-full rounded-full bg-primary" style={{ width: `${sections.length ? (doneCount / sections.length) * 100 : 0}%` }} />
+        </span>
+      </div>
       <ol className="grid">
         {sections.map((s, i) => {
           const state = s.done ? "done" : i === nextIndex ? "next" : "locked";
+          const body = (
+            <>
+              {state === "next" && (
+                <span className="mb-2 inline-block rounded-full bg-primary px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
+                  {t("next")}
+                </span>
+              )}
+              <p className="text-sm text-muted"><SkillLabel skill={s.skill} /></p>
+              <p className="font-semibold">{i + 1}. {s.title}</p>
+              <p className="mt-1 text-sm">{s.summary}</p>
+              <p className="mt-2 text-sm text-muted tabular-nums">
+                {t("courseParts", { n: s.practiceCount })}
+                {s.minutes ? ` · ${t("courseMinutes", { min: s.minutes })}` : ""}
+              </p>
+            </>
+          );
           return (
             <Node key={s.id} state={state} last={false}>
               {state === "locked" ? (
                 <div className="rounded-xl border border-line p-5 text-muted">
-                  <p className="font-semibold"><SkillLabel skill={s.skill} /></p>
+                  {body}
                   <p className="mt-1 flex items-center gap-1.5 text-base"><Lock aria-hidden className="h-4 w-4 shrink-0" />{t("locked")}</p>
                 </div>
               ) : (
@@ -85,15 +116,9 @@ export default function ModulePath({
                   href={s.href}
                   className={`card card-hover block p-5 ${state === "next" ? "border-2 border-primary" : "hover:border-muted"}`}
                 >
-                  {state === "next" && (
-                    <span className="mb-2 inline-block rounded-full bg-primary px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
-                      {t("next")}
-                    </span>
-                  )}
-                  <p className="text-sm text-muted"><SkillLabel skill={s.skill} /></p>
-                  <p className="font-semibold">{s.title}</p>
+                  {body}
                   <p className="mt-1 text-base text-muted">
-                    {s.hours ? `${t("hours", { hours: s.hours })} · ` : `${t("practice")} · `}
+                    {s.minutes ? "" : `${t("practice")} · `}
                     {s.done ? (
                       <span className="inline-flex items-center gap-1 font-semibold text-primary"><Check aria-hidden className="h-4 w-4" strokeWidth={2.5} />{t("done").replace(/\s*✓$/, "")}</span>
                     ) : retry ? t("practiceAgain") : t("open")}
@@ -103,8 +128,12 @@ export default function ModulePath({
             </Node>
           );
         })}
-        <Node state={testUnlocked ? "next" : "locked"} last>
-          {testUnlocked ? (
+        <Node state={finished ? "done" : testUnlocked ? "next" : "locked"} last>
+          {finished ? (
+            <p className="flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-4 text-lg font-semibold text-primary">
+              <FileCheck aria-hidden className="h-5 w-5 shrink-0" />{t("courseTestPassed")}
+            </p>
+          ) : testUnlocked ? (
             <Link href={testHref} className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-4 text-center text-lg font-semibold text-white">
               <FileCheck aria-hidden className="h-5 w-5 shrink-0" />{retake ? t("retakeTest") : t("startTest")}
             </Link>

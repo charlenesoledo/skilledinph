@@ -127,6 +127,22 @@ const tl = {
   checkNotYet: "Hindi pa tama ang napili",
   checkScore: "Score: {score} sa 100",
   checkChip: "{score} · target {target}",
+
+  // Course card and the other cards in the same slot
+  courseTitle: "Ang kurso mo",
+  courseMeta: "~{hours} oras · {count} section",
+  courseProgress: "{done} sa {total} section ang tapos",
+  courseParts: "Lesson · Example · {n} practice",
+  courseMinutes: "~{min} minuto",
+  courseTestPassed: "Final test: pasado ✓",
+  readyCourse: "Hindi mo na kailangan ng kurso — pasado ka na sa lahat ng target ng job na ito.",
+  foundTopic1: "Maingat na pagbasa ng product details",
+  foundTopic2: "Numero at presyo",
+  foundTopic3: "Friendly na Taglish replies",
+  foundTopic4: "Pagsunod sa step-by-step na instructions",
+  foundHours: "{h} oras",
+  foundTotal: "Kabuuan: ~{h} oras",
+  foundNote: "Naka-save ang resulta mo. Pag handa ka na, dito ka magsisimula.",
 } as const;
 
 export type StringKey = keyof typeof tl;
@@ -245,6 +261,21 @@ const en: Record<StringKey, string> = {
   checkNotYet: "Not the right choice yet",
   checkScore: "Score: {score} of 100",
   checkChip: "{score} · target {target}",
+
+  courseTitle: "Your course",
+  courseMeta: "~{hours} hours · {count} sections",
+  courseProgress: "{done} of {total} sections done",
+  courseParts: "Lesson · Example · {n} practice",
+  courseMinutes: "~{min} min",
+  courseTestPassed: "Final test: passed ✓",
+  readyCourse: "You don't need a course — you already meet every target for this job.",
+  foundTopic1: "Reading product details carefully",
+  foundTopic2: "Numbers and prices",
+  foundTopic3: "Friendly Taglish replies",
+  foundTopic4: "Following step-by-step instructions",
+  foundHours: "{h}h",
+  foundTotal: "Total: ~{h} hours",
+  foundNote: "Your result is saved. When you're ready, you start here.",
 };
 
 export const STRINGS: Record<Locale, Record<StringKey, string>> = { tl, en };

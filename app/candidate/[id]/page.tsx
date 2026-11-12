@@ -22,6 +22,14 @@ export const dynamic = "force-dynamic";
 const big = "block w-full rounded-xl px-4 py-4 text-center text-lg font-semibold";
 const ico = "h-5 w-5 shrink-0";
 
+// The first sentence of a lesson, as a one-line summary on the course card.
+const firstSentence = (text: string) => text.match(/^.*?[.!?](?=\s|$)/)?.[0] ?? text;
+
+// Foundational Track preview topics (sample content, display only).
+const FOUNDATIONAL_TOPICS = [
+  { k: "foundTopic1", h: 4 }, { k: "foundTopic2", h: 4 }, { k: "foundTopic3", h: 3 }, { k: "foundTopic4", h: 3 },
+] as const;
+
 // Where this candidate is on the five-step journey for one job. Display only: read from existing state.
 function journeyStates(o: {
   assessed: boolean; sorting?: string; plan: boolean; testUnlocked: boolean; offer: boolean;
@@ -282,24 +290,31 @@ export default async function Page({
                   </div>
                 )}
 
-                {plan && !outOfTries && (
-                  <ModulePath
-                    sections={sections.map((s) => ({
-                      id: s.id, skill: s.skill, title: s.title, done: !!plan.progress[s.id], hours: gap.per[s.skill] ?? null,
-                      href: `${home}?plan=${plan.id}&section=${s.id}`,
-                    }))}
-                    retry={!!last}
-                    testUnlocked={unlocked}
-                    testHref={`${home}?plan=${plan.id}&test=1`}
-                    retake={!!last}
-                  />
-                )}
               </>
             )}
 
-            {/* How each score was measured: one Skill Check task per job skill. */}
-            {a && (
-              <SkillCheckCard skills={job.target_skills.map((s) => ({ skill: s.skill, score: a.score_per_skill[s.skill] ?? 0, target: s.target }))} />
+            {/* The course slot: the course itself (trainable), "no course needed" (ready), or the foundational preview. */}
+            {a?.sorting === "trainable" && gap && plan && !outOfTries && (!offer || last?.passed) && (
+              <ModulePath
+                sections={sections.map((s) => ({
+                  id: s.id, skill: s.skill, title: s.title, done: !!plan.progress[s.id], hours: gap.per[s.skill] ?? null,
+                  href: `${home}?plan=${plan.id}&section=${s.id}`,
+                  summary: firstSentence(s.lesson_text), practiceCount: s.practice_items.length,
+                  minutes: gap.per[s.skill] ? gap.per[s.skill] * 60 : null,
+                }))}
+                retry={!!last}
+                testUnlocked={unlocked}
+                testHref={`${home}?plan=${plan.id}&test=1`}
+                retake={!!last}
+                totalHours={plan.personal_hours}
+                finished={!!offer}
+              />
+            )}
+
+            {a?.sorting === "ready" && (
+              <p className="flex gap-2 rounded-xl border border-line p-5 text-base">
+                <BookOpen aria-hidden className={`${ico} mt-0.5 text-primary`} /><span><T k="readyCourse" /></span>
+              </p>
             )}
 
             {a?.sorting === "not_yet" && gap && (
@@ -309,7 +324,25 @@ export default async function Page({
                   <T k="notYetLead" v={{ hours: gap.total }} />{" "}<b><T k="notYetTrack" /></b><T k="notYetTail" />
                 </p>
                 <p className="mt-2"><T k="notYetAfter" /></p>
+                {/* Foundational Track preview. Display only: there is no enrolment action. */}
+                <ul className="mt-4 grid gap-2">
+                  {FOUNDATIONAL_TOPICS.map(({ k, h }) => (
+                    <li key={k} className="flex items-center justify-between gap-3 rounded-lg bg-card px-4 py-3">
+                      <span className="flex items-center gap-2"><BookOpen aria-hidden className="h-4 w-4 shrink-0 text-primary" /><T k={k} /></span>
+                      <span className="shrink-0 tabular-nums text-muted"><T k="foundHours" v={{ h }} /></span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-right text-sm font-semibold tabular-nums">
+                  <T k="foundTotal" v={{ h: FOUNDATIONAL_TOPICS.reduce((n, x) => n + x.h, 0) }} />
+                </p>
+                <p className="mt-3 text-sm text-muted"><T k="foundNote" /></p>
               </div>
+            )}
+
+            {/* How each score was measured: one Skill Check task per job skill. */}
+            {a && (
+              <SkillCheckCard skills={job.target_skills.map((s) => ({ skill: s.skill, score: a.score_per_skill[s.skill] ?? 0, target: s.target }))} />
             )}
           </div>
         );
