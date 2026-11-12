@@ -35,15 +35,15 @@ export const SAMPLE_MODULE: {
       ],
     },
     {
-      skill: R, title: "Basahin nang buo bago sumagot",
+      skill: R, title: "Malinaw na utos sa AI: sabihin kung ano, para kanino, at gaano kahaba",
       lesson_text:
-        "Basahin ang buong mensahe ng customer bago tingnan ang draft na reply. Tanungin ang sarili: ano ba talaga ang tanong? Minsan dalawa ang tanong sa isang mensahe. Tapos i-check kung sinasagot ng reply ang lahat ng iyon. Kapag maganda ang tono pero mali ang sinasagot, hindi pa rin ito pwedeng ipadala.",
+        "Ang AI ay sumusunod lang sa utos mo, kaya kapag malabo ang utos, malabo rin ang lalabas. Ang malinaw na instruction ay may tatlong bahagi: ano ang isusulat, para kanino, at gaano kahaba o anong format. Isama rin ang mga detalyeng hindi dapat baguhin, gaya ng presyo at sukat. Kapag kulang ang isa sa mga ito, mas malamang na magkamali ang draft.",
       worked_example:
-        'Customer: "Magkano po shipping sa Cebu, at ilang araw?" Draft: "Free shipping po sa Metro Manila!" Hindi nasagot ang Cebu at ang bilang ng araw, kaya ipaayos.',
+        'Malabo: "Gawan mo ng description ang basket." Malinaw: "Sumulat ng 3-pangungusap na product description sa natural na Taglish para sa Bamboo Laundry Basket, ₱650, 45 × 35 cm. Huwag baguhin ang presyo at sukat." Ang pangalawa ang pipiliin.',
       practice_items: [
-        { skill: R, prompt: 'Customer: "Pwede po bang COD?" Draft: "Yes po, pwede ang COD."', choices: ["Tama, i-approve", "Mali, ipaayos"], correct_index: 0 },
-        { skill: R, prompt: 'Customer: "May kulay gray po ba at kasya sa 40cm na drawer?" Draft: "Meron po kaming gray!"', choices: ["Kumpleto ang sagot", "Kulang: hindi nasagot ang sukat"], correct_index: 1 },
-        { skill: R, prompt: 'Customer: "Paano po mag-return?" Draft: "Salamat po sa pagbili!"', choices: ["I-approve", "Ipaayos, hindi sinagot ang tanong"], correct_index: 1 },
+        { skill: R, prompt: "Alin ang mas malinaw na utos sa AI?", choices: ['"Ayusin mo ito."', '"Gawing natural na Taglish ang reply na ito, 2 pangungusap lang, at huwag baguhin ang presyo."'], correct_index: 1 },
+        { skill: R, prompt: 'Utos: "Sumulat ng product description para sa Glass Jar Set." Ano ang kulang?', choices: ["Walang kulang", "Haba, para kanino, at ang presyo at dami kada set"], correct_index: 1 },
+        { skill: R, prompt: 'Utos: "Sumulat ng 3-pangungusap na description sa Taglish para sa Cotton Pillow Cover, ₱180, 45 × 45 cm. Huwag baguhin ang presyo." Ano ang hatol?', choices: ["Malinaw, gamitin", "Malabo, ipaayos"], correct_index: 0 },
       ],
     },
   ],
@@ -53,7 +53,7 @@ export const SAMPLE_MODULE: {
       { skill: P, prompt: 'Title: "Set of 4 Glass Jars". Body: "Makakakuha ka ng 6 na jars". Ano ang mali?', choices: ["Dami kada set", "Tono", "Walang mali"], correct_index: 0 },
       { skill: T, prompt: "Alin ang natural na reply?", choices: ["Hello po! Opo, may stock pa. Gusto n'yo po bang i-reserve?", "Greetings. Stock is presently available for procurement.", "Meron."], correct_index: 0 },
       { skill: T, prompt: 'Draft: "We apologize for the inconvenience this may have caused." Ano ang gagawin?', choices: ["I-approve, magalang naman", "Ipaayos: gawing natural na Taglish", "Burahin at huwag nang sumagot"], correct_index: 1 },
-      { skill: R, prompt: 'Customer: "Kailan darating at pwede bang palitan ang kulay?" Draft: "Darating po sa Sabado." Ano ang hatol?', choices: ["Kumpleto", "Kulang: hindi nasagot ang palit-kulay", "Mali ang tono"], correct_index: 1 },
+      { skill: R, prompt: "Alin ang pinakamalinaw na utos sa AI para sa product description ng Ceramic Mug Set?", choices: ['"Gawan mo ng description."', '"Sumulat ng 3-pangungusap na description sa natural na Taglish para sa Ceramic Mug Set, ₱399, 4 piraso. Huwag baguhin ang presyo."', '"Description ng mug, gandahan mo."'], correct_index: 1 },
     ],
     rubric: [
       "Price matches in the title, body, and variant",
