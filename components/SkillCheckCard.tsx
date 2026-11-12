@@ -2,12 +2,14 @@
 
 import { ClipboardList } from "lucide-react";
 import { SkillLabel } from "./CandidateIcons";
-import { useT } from "./Locale";
+import { useLocale, useT } from "./Locale";
 import type { StringKey } from "@/lib/i18n/candidate";
 
 // "How we measured your skills": the Skill Check task behind each score, and how the candidate did.
 // Display only. Scores are the candidate's existing assessment scores, unchanged.
 type Row = { skill: string; score: number; target: number };
+// Live: the Skill Check tasks the candidate answered, with the points the scorer gave each one.
+export type AnsweredTask = { n: number; skill: string; title_tl: string; title_en: string; points: number; max: number };
 
 const TASKS: Record<string, StringKey> = {
   "Price & Detail Accuracy": "checkTaskPrice",
@@ -15,8 +17,9 @@ const TASKS: Record<string, StringKey> = {
   "Prompt Judgment": "checkTaskPrompt",
 };
 
-export default function SkillCheckCard({ skills }: { skills: Row[] }) {
+export default function SkillCheckCard({ skills, tasks }: { skills: Row[]; tasks?: AnsweredTask[] }) {
   const t = useT();
+  const { locale } = useLocale();
   const result = ({ skill, score, target }: Row) => {
     // Three planted errors: the score maps to how many were found.
     if (skill === "Price & Detail Accuracy") return t("checkFound", { n: Math.min(3, Math.max(0, Math.round((score * 3) / 100))) });
@@ -39,10 +42,23 @@ export default function SkillCheckCard({ skills }: { skills: Row[] }) {
                 {t("checkChip", { score: row.score, target: row.target })}
               </span>
             </div>
-            {TASKS[row.skill] && (
-              <p className="text-sm"><span className="font-semibold text-muted">{t("checkTaskLabel")}: </span>{t(TASKS[row.skill])}</p>
+            {tasks ? (
+              <ul className="grid gap-1 text-sm">
+                {tasks.filter((x) => x.skill === row.skill).map((x) => (
+                  <li key={x.n} className="flex justify-between gap-3">
+                    <span><span className="font-semibold text-muted">{t("checkTaskN", { n: x.n })}: </span>{locale === "en" ? x.title_en : x.title_tl}</span>
+                    <span className="shrink-0 tabular-nums">{t("checkPoints", { points: x.points, max: x.max })}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <>
+                {TASKS[row.skill] && (
+                  <p className="text-sm"><span className="font-semibold text-muted">{t("checkTaskLabel")}: </span>{t(TASKS[row.skill])}</p>
+                )}
+                <p className="text-sm"><span className="font-semibold text-muted">{t("checkResultLabel")}: </span>{result(row)}</p>
+              </>
             )}
-            <p className="text-sm"><span className="font-semibold text-muted">{t("checkResultLabel")}: </span>{result(row)}</p>
           </li>
         ))}
       </ul>

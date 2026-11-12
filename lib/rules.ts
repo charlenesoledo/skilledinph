@@ -27,7 +27,7 @@ export function gapHours(scores: Record<string, number>, targets: TargetSkill[])
   return { per, total };
 }
 
-export const MAX_TRAINABLE_HOURS = 12;
+export const MAX_TRAINABLE_HOURS = 8;
 export function sortByGap(totalGapHours: number): Sorting {
   if (totalGapHours === 0) return "ready";
   return totalGapHours <= MAX_TRAINABLE_HOURS ? "trainable" : "not_yet";

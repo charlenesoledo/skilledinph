@@ -6,6 +6,7 @@ import AuditPanel from "./AuditPanel";
 import SourcesPanel from "@/components/SourcesPanel";
 import PipelineStrip from "@/components/PipelineStrip";
 import KnowledgeBaseCard from "@/components/KnowledgeBaseCard";
+import SkillCheckAudit from "@/components/SkillCheckAudit";
 import Link from "next/link";
 import { currentPack } from "@/lib/live/packs";
 import { currentWorkspace } from "@/lib/workspace";
@@ -165,6 +166,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </div>
       </div>
 
+      {live && <SkillCheckAudit job={job} />}
       {live && <KnowledgeBaseCard employerId={job.employer_id} />}
       <SourcesPanel job={job} />
       <ModulePanel job={job} />

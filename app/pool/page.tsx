@@ -12,6 +12,8 @@ import { currentModule } from "@/lib/modules";
 import type { Module } from "@/lib/types";
 import { OFFER_ICONS, SORT_ICONS } from "@/components/CandidateIcons";
 import { currentWorkspace } from "@/lib/workspace";
+import { currentPack } from "@/lib/live/packs";
+import { sendSkillChecks } from "./skillcheck-actions";
 import type { CandidateProfile } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +48,8 @@ export default async function Page() {
   const live = workspace === "live";
   const current = new Map<string, Module | undefined>();
   for (const j of jobs) current.set(j.id, await currentModule(j.id));
+  const checks = live ? await all("skill_checks") : [];
+  const packs = new Map(live ? await Promise.all(jobs.map(async (j) => [j.id, await currentPack(j.id)] as const)) : []);
   return (
     <section>
       <h1 className="text-2xl font-bold">Candidate Pool</h1>
@@ -75,6 +79,37 @@ export default async function Page() {
                       <PendingButton disabled={!g.open} className={btn} label="Run all assessments" pendingLabel="Running…" pendingClassName={RUNNING_STYLE} />
                     </form>
                   )}
+                  {live && (() => {
+                    // Send Skill Check: only once the employer has approved the Assessment Pack, and only for an open job.
+                    const pack = packs.get(j.id);
+                    const approved = pack?.status === "employer_approved";
+                    const eligible = candidates.filter((c) => !checks.some((k) => k.job_id === j.id && k.candidate_id === c.id));
+                    const reason = !g.open ? "Open the job first (confirm the pay rate)."
+                      : !pack ? "Generate the Assessment Pack first."
+                      : !approved ? "The employer must approve the Assessment Pack first."
+                      : eligible.length === 0 ? "Every pool record has a Skill Check for this job." : null;
+                    return (
+                      <form action={sendSkillChecks.bind(null, j.id)} className="mt-2 grid w-full gap-2 rounded-xl border border-line p-3">
+                        <div className="flex flex-wrap gap-x-4 gap-y-2">
+                          {eligible.map((c) => (
+                            <label key={c.id} className="flex items-center gap-2">
+                              <input type="checkbox" name="candidate" value={c.id} disabled={!!reason} className="h-4 w-4 accent-primary" />
+                              {c.display_name}
+                            </label>
+                          ))}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <PendingButton disabled={!!reason} className={btn} label="Send Skill Check" pendingLabel="Sending…" pendingClassName={RUNNING_STYLE} />
+                          {reason && <span className="text-xs text-muted">{reason}</span>}
+                          {pack && (
+                            <Link href={`/employer/jobs/${j.id}/pack`} className="text-xs font-semibold underline underline-offset-4">
+                              Assessment Pack v{pack.version} · {approved ? "Employer-approved" : "Draft"}
+                            </Link>
+                          )}
+                        </div>
+                      </form>
+                    );
+                  })()}
                 </li>
               );
             })}
@@ -126,7 +161,11 @@ export default async function Page() {
                             />
                           </>
                         ) : live ? (
-                          <p className="text-muted">No Skill Check answered yet.</p>
+                          <p className="text-muted">
+                            {checks.some((k) => k.job_id === j.id && k.candidate_id === c.id)
+                              ? "Skill Check sent · waiting for the answers."
+                              : "No Skill Check sent yet."}
+                          </p>
                         ) : (
                           <>
                             <AgentRunButton action={runAssessment.bind(null, j.id, c.id)} label="Run assessment" retryLabel="Retry assessment"
@@ -143,8 +182,8 @@ export default async function Page() {
             })}
           </ul>
           <p className="mt-4 text-xs text-muted">
-            Sorting rule: per skill below target, hours = ceil((target − current) / 25) × 2. No gap is READY, up to 12 hours is
-            TRAINABLE, more than 12 is NOT YET for this job and is routed to the foundational track.
+            Sorting rule: per skill below target, hours = ceil((target − current) / 25) × 2. No gap is READY, up to 8 hours is
+            TRAINABLE, more than 8 is NOT YET for this job and is routed to the foundational track.
           </p>
         </>
       )}

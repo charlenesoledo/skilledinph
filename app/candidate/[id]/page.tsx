@@ -9,6 +9,8 @@ import { T } from "@/components/Locale";
 import OfferPromise from "@/components/OfferPromise";
 import ResultMessage from "@/components/ResultMessage";
 import SkillCheckCard from "@/components/SkillCheckCard";
+import SkillCheckForm from "@/components/SkillCheckForm";
+import { submitSkillCheck } from "@/app/pool/skillcheck-actions";
 import ModulePath, { PathProgress } from "@/components/ModulePath";
 import { pathStep } from "@/lib/path";
 import SunBand from "@/components/SunBand";
@@ -47,7 +49,7 @@ function journeyStates(o: {
 
 export default async function Page({
   params, searchParams,
-}: { params: Promise<{ id: string }>; searchParams: Promise<{ plan?: string; section?: string; test?: string }> }) {
+}: { params: Promise<{ id: string }>; searchParams: Promise<{ plan?: string; section?: string; test?: string; check?: string }> }) {
   const { id } = await params;
   const query = await searchParams;
   const candidate = await get("candidates", id);
@@ -58,9 +60,32 @@ export default async function Page({
       </section>
     );
   const home = `/candidate/${candidate.id}`;
-  const [jobs, employers, assessments, modules, allPlans, results, offers] = await Promise.all([
+  const [jobs, employers, assessments, modules, allPlans, results, offers, allChecks, packs] = await Promise.all([
     all("jobs"), all("employers"), all("assessments"), all("modules"), all("candidate_plans"), all("test_results"), all("offers"),
+    all("skill_checks"), all("assessment_packs"),
   ]);
+  const checks = allChecks.filter((k) => k.candidate_id === candidate.id);
+
+  // ---- Live: the Skill Check itself (tasks only; the key never leaves the server) ----
+  if (query.check) {
+    const check = checks.find((k) => k.id === query.check && k.status === "sent");
+    const pack = packs.find((p) => p.id === check?.pack_id && p.status === "employer_approved");
+    if (!check || !pack) redirect(home);
+    const job = jobs.find((j) => j.id === check.job_id);
+    return (
+      <section className="mx-auto grid max-w-[480px] gap-5 text-lg">
+        <Link href={home} className="text-base font-semibold underline"><T k="back" /></Link>
+        <div>
+          <p className="text-sm text-muted">{job?.title}</p>
+          <h1 className="flex items-center gap-2 text-2xl font-bold"><ClipboardCheck aria-hidden className="h-6 w-6 shrink-0 text-primary" />Skill Check</h1>
+        </div>
+        <SkillCheckForm
+          tasks={pack.items.map((it) => ({ n: it.n, kind: it.kind, prompt: it.prompt, quote: it.quote, choices: it.choices }))}
+          action={submitSkillCheck.bind(null, check.id)}
+        />
+      </section>
+    );
+  }
   const plans = allPlans.filter((p) => p.candidate_id === candidate.id);
   const attemptsFor = (planId: string) => results.filter((r) => r.candidate_plan_id === planId);
 
@@ -225,7 +250,21 @@ export default async function Page({
               </>
             )}
 
-            {!offer && !a && <p className="text-muted"><T k="noAssessment" /></p>}
+            {(() => {
+              // Live: a Skill Check sent for this job, or the note that the answers were received.
+              const check = checks.find((k) => k.job_id === job.id);
+              if (check?.status === "sent")
+                return (
+                  <div className="grid gap-3 rounded-xl border-2 border-primary p-5">
+                    <p className="flex items-center gap-2 font-bold"><ClipboardCheck aria-hidden className={`${ico} text-primary`} /><T k="checkCardTitle" /></p>
+                    <p className="text-base"><T k="checkCardBody" /></p>
+                    <Link href={`${home}?check=${check.id}`} className={`${big} bg-primary text-white`}><T k="checkStart" /></Link>
+                  </div>
+                );
+              if (check?.status === "submitted")
+                return <p className="flex items-center gap-2 text-base font-semibold text-primary"><Check aria-hidden className={ico} /><T k="checkReceived" /></p>;
+              return !offer && !a ? <p className="text-muted"><T k="noAssessment" /></p> : null;
+            })()}
 
             {!offer && a?.sorting === "ready" && (
               <div className="rounded-xl bg-primary/10 p-5">
@@ -342,7 +381,20 @@ export default async function Page({
 
             {/* How each score was measured: one Skill Check task per job skill. */}
             {a && (
-              <SkillCheckCard skills={job.target_skills.map((s) => ({ skill: s.skill, score: a.score_per_skill[s.skill] ?? 0, target: s.target }))} />
+              <SkillCheckCard
+                skills={job.target_skills.map((s) => ({ skill: s.skill, score: a.score_per_skill[s.skill] ?? 0, target: s.target }))}
+                tasks={(() => {
+                  // Live: the tasks this candidate actually answered, with the points the scorer gave.
+                  const check = checks.find((k) => k.job_id === job.id && k.status === "submitted");
+                  const pack = packs.find((p) => p.id === check?.pack_id);
+                  return check?.scored && pack
+                    ? check.scored.tasks.map((st) => {
+                        const it = pack.items.find((x) => x.n === st.n)!;
+                        return { n: st.n, skill: st.skill, title_tl: it.title_tl, title_en: it.title_en, points: st.points, max: st.max };
+                      })
+                    : undefined;
+                })()}
+              />
             )}
           </div>
         );

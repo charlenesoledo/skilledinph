@@ -127,6 +127,18 @@ const tl = {
   checkScore: "Score: {score} sa 100",
   checkChip: "{score} · target {target}",
 
+  // Live Skill Check
+  checkCardTitle: "Skill Check para sa job na ito",
+  checkCardBody: "Maiikling tasks na gaya ng totoong trabaho, mga ~15 minuto. Isang beses lang ito ipapasa.",
+  checkStart: "Simulan ang Skill Check",
+  checkIntro: "Kumusta! Ito ay maiikling tasks na gaya ng totoong trabaho. Walang trick questions. Basahin ang bawat isa at piliin ang pinakamagandang sagot. ~15 minuto ito. Hindi makikita ng employer ang pangalan mo habang sini-score ito.",
+  checkTaskN: "Task {n}",
+  checkPickAll: "Piliin ang lahat ng tama.",
+  checkSubmit: "Ipasa ang sagot",
+  checkAnswerAll: "Sagutin muna ang lahat ng {count} task.",
+  checkReceived: "Natanggap na ang sagot mo.",
+  checkPoints: "{points}/{max} puntos",
+
   // Course card and the other cards in the same slot
   courseTitle: "Ang kurso mo",
   courseMeta: "~{hours} oras · {count} section",
@@ -259,6 +271,17 @@ const en: Record<StringKey, string> = {
   checkNotYet: "Not the right choice yet",
   checkScore: "Score: {score} of 100",
   checkChip: "{score} · target {target}",
+
+  checkCardTitle: "Skill Check for this job",
+  checkCardBody: "Short tasks like the real work, about 15 minutes. You submit it once.",
+  checkStart: "Start the Skill Check",
+  checkIntro: "Hello! These are short tasks like the real work. No trick questions. Read each one and choose the best answer. It takes about 15 minutes. The employer does not see your name while it is scored.",
+  checkTaskN: "Task {n}",
+  checkPickAll: "Choose every one that applies.",
+  checkSubmit: "Submit my answers",
+  checkAnswerAll: "Answer all {count} tasks first.",
+  checkReceived: "We received your answers.",
+  checkPoints: "{points}/{max} points",
 
   courseTitle: "Your course",
   courseMeta: "~{hours} hours · {count} sections",
