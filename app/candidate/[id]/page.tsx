@@ -7,6 +7,7 @@ import type { Module } from "@/lib/types";
 import Practice from "@/components/Practice";
 import { T } from "@/components/Locale";
 import OfferPromise from "@/components/OfferPromise";
+import ResultMessage from "@/components/ResultMessage";
 import ModulePath, { PathProgress } from "@/components/ModulePath";
 import { pathStep } from "@/lib/path";
 import SunBand from "@/components/SunBand";
@@ -193,7 +194,9 @@ export default async function Page({
                   seatsTaken={job.seats_taken} slots={job.reserved_slots} />
                 {last?.passed && (
                   <p className="text-base">
-                    {last.scored_output.explanation ?? <T k="resultFallback" v={{ score: last.score, pass: planModule?.passing_score ?? "" }} />}
+                    <ResultMessage stored={last.scored_output.explanation} score={last.score} passed
+                      correct={last.scored_output.items.filter((x) => x.correct).length} total={last.scored_output.items.length}
+                      pass={planModule?.passing_score ?? ""} missedSkills={[]} retakeLeft={false} />
                   </p>
                 )}
                 {offer.status === "offered" && (
@@ -268,7 +271,13 @@ export default async function Page({
                   <div className="rounded-xl bg-paper p-5 text-base">
                     <p className="flex items-center gap-1.5 text-sm font-semibold text-muted"><ClipboardCheck aria-hidden className="h-4 w-4 shrink-0" /><T k="result" /></p>
                     <p className="big-number mt-1">{last.score}<span className="ml-2 font-sans text-base font-normal text-muted"><T k="passMarkShort" v={{ pass: planModule?.passing_score ?? "" }} /></span></p>
-                    <p className="mt-1">{last.scored_output.explanation ?? <T k="resultSaved" />}</p>
+                    <p className="mt-1">
+                      <ResultMessage stored={last.scored_output.explanation} score={last.score} passed={false}
+                        correct={last.scored_output.items.filter((x) => x.correct).length} total={last.scored_output.items.length}
+                        pass={planModule?.passing_score ?? ""}
+                        missedSkills={[...new Set(last.scored_output.items.filter((x) => !x.correct).map((x) => x.skill))]}
+                        retakeLeft={tries.length < MAX_TEST_ATTEMPTS} />
+                    </p>
                   </div>
                 )}
 

@@ -106,6 +106,12 @@ const tl = {
   testFinal: "Final test · {job}",
   testAssessment: "Assessment · {job}",
   datePassed: "Petsa: {date}",
+
+  // Final-test result message (EN mode rebuilds it from the stored result; TL shows the agent's message)
+  resultPassedMsg: "Nakuha mo ang {score}. Tama ang {correct} sa {total} na tanong, at pasado ito sa itinakda ng employer na {pass}. Ang galing! Susunod: ang job offer mo.",
+  resultFailedMsg: "Nakuha mo ang {score}. Tama ang {correct} sa {total} na tanong; {pass} ang kailangan ng employer. Kaunti na lang! Mag-practice muna tayo sa: {skills}.",
+  resultRetakeLeft: "May isa ka pang retake pagkatapos mong balikan ang mga ito.",
+  resultNoRetake: "Naka-save ang progress mo, at ituturo ka namin sa susunod na bagay na job para sa'yo.",
 } as const;
 
 export type StringKey = keyof typeof tl;
@@ -205,6 +211,11 @@ const en: Record<StringKey, string> = {
   testFinal: "Final test · {job}",
   testAssessment: "Assessment · {job}",
   datePassed: "Date: {date}",
+
+  resultPassedMsg: "You scored {score}. You answered {correct} of {total} questions correctly, above the employer's passing score of {pass}. Great work! Next: your job offer.",
+  resultFailedMsg: "You scored {score}. You answered {correct} of {total} questions correctly; the employer needs {pass}. Almost there! Let's practice these first: {skills}.",
+  resultRetakeLeft: "You have one more retake after you review these.",
+  resultNoRetake: "Your progress is saved, and we will point you to the next job that fits you.",
 };
 
 export const STRINGS: Record<Locale, Record<StringKey, string>> = { tl, en };
