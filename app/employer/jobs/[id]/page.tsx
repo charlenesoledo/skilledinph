@@ -3,6 +3,7 @@ import { all, get } from "@/lib/db";
 import { analyzeJob, confirmRate, proposeRate } from "../../actions";
 import ModulePanel from "./ModulePanel";
 import AuditPanel from "./AuditPanel";
+import SourcesPanel from "@/components/SourcesPanel";
 import TargetBar from "@/components/TargetBar";
 import SkillBars from "@/components/SkillBars";
 import AgentRunButton from "@/components/AgentRunButton";
@@ -141,6 +142,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </div>
       </div>
 
+      <SourcesPanel job={job} />
       <ModulePanel job={job} />
       <AuditPanel job={job} />
     </section>
