@@ -148,3 +148,22 @@ export async function rateCandidate(jobId: string, candidateId: string, form: Fo
   ]);
   revalidatePath("/", "layout");
 }
+
+// Attach or replace the employer's Knowledge Base. .md and .txt replace the document text (new version).
+// A PDF is accepted by file name only: text extraction is a production feature, so the last text stays.
+export async function uploadKnowledgeBase(employerId: string, form: FormData) {
+  const employer = await get("employers", employerId);
+  const file = form.get("file");
+  if (!employer || !(file instanceof File) || file.size === 0) return;
+  if (file.size > 500_000) return; // a Knowledge Base is a short document; larger files are refused
+  const name = file.name.slice(0, 120);
+  const ext = name.toLowerCase().split(".").pop();
+  const kind = ext === "pdf" ? "pdf" : ext === "txt" ? "txt" : ext === "md" ? "md" : null;
+  if (!kind) return;
+  const existing = (await all("knowledge_bases")).filter((k) => k.employer_id === employerId).at(-1);
+  const now = new Date().toISOString();
+  const body = kind === "pdf" ? existing?.body ?? "" : (await file.text()).slice(0, 200_000);
+  if (existing) await update("knowledge_bases", existing.id, { file_name: name, kind, body, version: existing.version + 1, updated_at: now });
+  else await insert("knowledge_bases", { id: `kb_${crypto.randomUUID().slice(0, 8)}`, employer_id: employerId, file_name: name, kind, body, version: 1, updated_at: now });
+  revalidatePath("/", "layout");
+}

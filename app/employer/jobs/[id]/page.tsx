@@ -5,6 +5,8 @@ import ModulePanel from "./ModulePanel";
 import AuditPanel from "./AuditPanel";
 import SourcesPanel from "@/components/SourcesPanel";
 import PipelineStrip from "@/components/PipelineStrip";
+import KnowledgeBaseCard from "@/components/KnowledgeBaseCard";
+import { currentWorkspace } from "@/lib/workspace";
 import TargetBar from "@/components/TargetBar";
 import SkillBars from "@/components/SkillBars";
 import AgentRunButton from "@/components/AgentRunButton";
@@ -154,6 +156,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </div>
       </div>
 
+      {(await currentWorkspace()) === "live" && <KnowledgeBaseCard employerId={job.employer_id} />}
       <SourcesPanel job={job} />
       <ModulePanel job={job} />
       <AuditPanel job={job} />

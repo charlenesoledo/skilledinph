@@ -2,6 +2,8 @@ import Link from "next/link";
 import { all } from "@/lib/db";
 import { createJob } from "./actions";
 import PipelineStrip from "@/components/PipelineStrip";
+import KnowledgeBaseCard from "@/components/KnowledgeBaseCard";
+import { currentWorkspace } from "@/lib/workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,7 @@ export default async function Page() {
   return (
     <div className="grid gap-8">
     <PipelineStrip />
+    {(await currentWorkspace()) === "live" && employer && <KnowledgeBaseCard employerId={employer.id} />}
     <section className="grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
       <div>
         <h1 className="text-2xl font-bold">Job Intake</h1>
