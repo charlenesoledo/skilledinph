@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { useReducedMotion } from "motion/react";
 import { useCountUp } from "./useCountUp";
-import { COUNT_REVEAL_MS, DUR_MED, EASE_ENTER } from "@/lib/motion";
+import { COUNT_REVEAL_MS } from "@/lib/motion";
 import { useT } from "./Locale";
 import type { StringKey, Values } from "@/lib/i18n/candidate";
 import { BadgeCheck, Building2, Check } from "lucide-react";
@@ -38,7 +38,7 @@ export default function OfferPromise(props: OfferPromiseProps) {
   const first = useFirstReveal(final ? props.offerId : null);
   const reveal = { first, animate: first === true && !reduce };
   return (
-    <div className={`grid gap-3 rounded-2xl bg-card p-6 ${final ? "border-2 border-dashed border-ink" : "border border-line shadow-card"}`}>
+    <div className={`grid gap-3 rounded-2xl bg-card p-6 border border-line ${final ? "" : "shadow-card"}`}>
       {final && <FinalHeadline {...props} t={t} {...reveal} />}
       <div className="flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink"><Building2 aria-hidden className="h-4 w-4 shrink-0" />{props.employerName}</span>
@@ -98,23 +98,20 @@ function useFirstReveal(offerId: string | null) {
 
 type FinalProps = Extract<OfferPromiseProps, { kind: "final" }> & { t: T; first: boolean | null; animate: boolean };
 
-// Headline of the offer card: the stamp, large, then the pay once, large, under it.
+// Headline of the offer card: the GUARANTEED band across the top, then the pay once, large, under it.
 function FinalHeadline(p: FinalProps) {
   const { t, first, animate } = p;
   const shownPay = useCountUp(p.pay, animate ? COUNT_REVEAL_MS : 0);
   return (
-    <div className="grid justify-items-start gap-3">
-      <motion.span
-        key={String(first)}
-        initial={animate ? { scale: 1.6, rotate: 0, opacity: 0 } : false}
-        animate={{ scale: 1, rotate: -6, opacity: 1 }}
-        transition={{ duration: DUR_MED, ease: EASE_ENTER }}
-        className={`origin-left rounded-lg border-[3px] px-5 py-3 font-display text-2xl font-bold tracking-[0.18em] ${
-          p.guaranteed ? "border-ink bg-accent text-ink" : "border-muted bg-line text-ink"
+    <div className="grid gap-3">
+      {/* Full-width band on the card's top inside edge: the card's headline. */}
+      <p
+        className={`-mx-6 -mt-6 self-stretch rounded-t-[15px] px-4 py-2.5 text-center font-display text-[28px] font-bold leading-tight tracking-[0.08em] text-ink ${
+          p.guaranteed ? "bg-accent" : "bg-line"
         }`}
       >
         {p.guaranteed ? t("stampGuaranteed") : t("stampWaitlist")}
-      </motion.span>
+      </p>
       <p className="big-number" aria-label={t("payLabel", { pay: p.pay })}>
         ₱{first === null ? p.pay : shownPay}
         <span className="ml-1 font-sans text-base font-normal text-muted">{t("perDay")}</span>
