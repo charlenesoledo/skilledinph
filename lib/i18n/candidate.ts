@@ -112,6 +112,21 @@ const tl = {
   resultFailedMsg: "Nakuha mo ang {score}. Tama ang {correct} sa {total} na tanong; {pass} ang kailangan ng employer. Kaunti na lang! Mag-practice muna tayo sa: {skills}.",
   resultRetakeLeft: "May isa ka pang retake pagkatapos mong balikan ang mga ito.",
   resultNoRetake: "Naka-save ang progress mo, at ituturo ka namin sa susunod na bagay na job para sa'yo.",
+
+  // How we measured your skills
+  skillCheckTitle: "Paano namin nasukat ang skills mo",
+  skillCheckSub: "Sinagutan mo ito nang sumali ka sa pool. Walang pangalan, litrato, o lokasyon sa pag-score.",
+  checkTaskLabel: "Task",
+  checkResultLabel: "Resulta",
+  checkTaskPrice: "I-check ang sample listing na ito: may mali sa presyo, sukat, at delivery fee. Hanapin ang mga ito.",
+  checkTaskTone: "Piliin ang reply na ipapadala ng friendly na seller sa buyer na hindi masaya (3 pagpipilian).",
+  checkTaskPrompt: "Piliin ang pinakamalinaw na instruction para sa AI helper na susulat ng product description (3 pagpipilian).",
+  checkTaskReading: "Basahin ang tanong ng buyer at piliin kung nasagot ng draft reply ang lahat ng tinanong (3 pagpipilian).",
+  checkFound: "Nahanap ang {n} sa 3 mali",
+  checkCorrect: "Tama ang napili",
+  checkNotYet: "Hindi pa tama ang napili",
+  checkScore: "Score: {score} sa 100",
+  checkChip: "{score} · target {target}",
 } as const;
 
 export type StringKey = keyof typeof tl;
@@ -216,6 +231,20 @@ const en: Record<StringKey, string> = {
   resultFailedMsg: "You scored {score}. You answered {correct} of {total} questions correctly; the employer needs {pass}. Almost there! Let's practice these first: {skills}.",
   resultRetakeLeft: "You have one more retake after you review these.",
   resultNoRetake: "Your progress is saved, and we will point you to the next job that fits you.",
+
+  skillCheckTitle: "How we measured your skills",
+  skillCheckSub: "You answered these when you joined the pool. Scoring uses no name, photo, or location.",
+  checkTaskLabel: "Task",
+  checkResultLabel: "Result",
+  checkTaskPrice: "Check this sample listing: the price, size, and delivery fee contain errors. Find them.",
+  checkTaskTone: "Choose the reply a friendly seller would send to an unhappy buyer (3 choices).",
+  checkTaskPrompt: "Pick the clearest instruction to give an AI helper for writing a product description (3 choices).",
+  checkTaskReading: "Read a buyer's question and choose whether the draft reply answers everything asked (3 choices).",
+  checkFound: "Found {n} of 3 errors",
+  checkCorrect: "Correct choice",
+  checkNotYet: "Not the right choice yet",
+  checkScore: "Score: {score} of 100",
+  checkChip: "{score} · target {target}",
 };
 
 export const STRINGS: Record<Locale, Record<StringKey, string>> = { tl, en };

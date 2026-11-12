@@ -8,6 +8,7 @@ import Practice from "@/components/Practice";
 import { T } from "@/components/Locale";
 import OfferPromise from "@/components/OfferPromise";
 import ResultMessage from "@/components/ResultMessage";
+import SkillCheckCard from "@/components/SkillCheckCard";
 import ModulePath, { PathProgress } from "@/components/ModulePath";
 import { pathStep } from "@/lib/path";
 import SunBand from "@/components/SunBand";
@@ -294,6 +295,11 @@ export default async function Page({
                   />
                 )}
               </>
+            )}
+
+            {/* How each score was measured: one Skill Check task per job skill. */}
+            {a && (
+              <SkillCheckCard skills={job.target_skills.map((s) => ({ skill: s.skill, score: a.score_per_skill[s.skill] ?? 0, target: s.target }))} />
             )}
 
             {a?.sorting === "not_yet" && gap && (
