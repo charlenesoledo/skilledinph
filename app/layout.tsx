@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import RoleSwitcher from "@/components/RoleSwitcher";
+import { LocaleProvider } from "@/components/Locale";
 import { llmMode } from "@/lib/mode";
 import "./globals.css";
 
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body>
+        <LocaleProvider>
         <header className="border-b border-line bg-card">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-4">
             <span className="font-display text-xl font-bold tracking-tight">Orchestrator</span>
@@ -26,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+        </LocaleProvider>
       </body>
     </html>
   );
