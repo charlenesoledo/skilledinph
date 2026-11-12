@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import RoleSwitcher from "@/components/RoleSwitcher";
 import { LocaleProvider } from "@/components/Locale";
+import LocaleToggle from "@/components/LocaleToggle";
 import { llmMode } from "@/lib/mode";
 import "./globals.css";
 
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {llmMode() === "mock" && (
               <span className="rounded-md bg-accent px-2 py-1 text-xs font-semibold uppercase tracking-wide text-ink">Mock Mode</span>
             )}
+            <LocaleToggle />
             <RoleSwitcher />
           </div>
         </header>
